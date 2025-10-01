@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MarkdownToPDF (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "MarkdownToPDF (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
