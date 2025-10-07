@@ -47,7 +47,6 @@ public sealed class WireframePageViewModel : ObservableObject
     }
 
     public int TotalPages => PreviewPages.Count;
-
     public string PageIndicator => TotalPages == 0 ? "0 / 0" : $"{CurrentPage} / {TotalPages}";
 
     public FormattingOptions Formatting { get; } = new()
@@ -71,7 +70,7 @@ public sealed class WireframePageViewModel : ObservableObject
         BottomMarginMm = 25.4,
         LeftMarginMm = 25.4,
         PreviewDestinationWidthPx = 794,
-        PreviewDpi = 96
+        PreviewDpi = 96,
     };
 
     public WireframePageViewModel(IMarkdownService mdService, IPdfService pdfService)
@@ -92,13 +91,9 @@ public sealed class WireframePageViewModel : ObservableObject
         OnPropertyChanged(nameof(TotalPages));
     }
 
-    // Backward-compatible single-file entry point
     public async Task LoadFromFileAsync(string markdownPath, CancellationToken ct = default)
-    {
-        await LoadFromFilesAsync(new[] { markdownPath }, ct);
-    }
+        => await LoadFromFilesAsync(new[] { markdownPath }, ct);
 
-    // New: multi-file support (preserves order)
     public async Task LoadFromFilesAsync(IReadOnlyList<string> markdownPaths, CancellationToken ct = default)
     {
         CurrentMarkdownPaths = (markdownPaths ?? Array.Empty<string>())
@@ -106,21 +101,53 @@ public sealed class WireframePageViewModel : ObservableObject
             .ToArray();
 
         CurrentMarkdownPath = CurrentMarkdownPaths.FirstOrDefault();
+        await RebuildPreviewAsync(ct);
+    }
 
-        // Apply base CSS for consistent preview/PDF
+    public async Task ApplySettingsAsync(FormattingOptions newFormatting, ExportOptions newExport, CancellationToken ct = default)
+    {
+        // Copy Formatting properties (only those user can edit)
+        Formatting.UseAdvancedExtensions = newFormatting.UseAdvancedExtensions;
+        Formatting.UsePipeTables = newFormatting.UsePipeTables;
+        Formatting.UseAutoLinks = newFormatting.UseAutoLinks;
+        Formatting.InsertPageBreaksBetweenFiles = newFormatting.InsertPageBreaksBetweenFiles;
+        Formatting.BaseFontFamily = newFormatting.BaseFontFamily;
+        Formatting.BodyMarginPx = newFormatting.BodyMarginPx;
+
+        // Copy Export options
+        Export.PaperFormat = newExport.PaperFormat;
+        Export.Landscape = newExport.Landscape;
+        Export.PrintBackground = newExport.PrintBackground;
+        Export.PreferCssPageSize = newExport.PreferCssPageSize;
+        Export.TopMarginMm = newExport.TopMarginMm;
+        Export.RightMarginMm = newExport.RightMarginMm;
+        Export.BottomMarginMm = newExport.BottomMarginMm;
+        Export.LeftMarginMm = newExport.LeftMarginMm;
+        Export.ShowPageNumbers = newExport.ShowPageNumbers;
+
+        await RebuildPreviewAsync(ct);
+    }
+
+    private async Task RebuildPreviewAsync(CancellationToken ct)
+    {
+        if (CurrentMarkdownPaths.Count == 0)
+        {
+            PreviewPages.Clear();
+            _currentHtml = null;
+            CurrentPage = 0;
+            return;
+        }
+
         ApplyBaseHeadCss();
 
         var models = CurrentMarkdownPaths.Select(p => new MarkdownFileModel(p)).ToArray();
-
         _currentHtml = await _mdService.BuildCombinedHtmlAsync(models, Formatting, ct);
 
-        // Build a temporary A4 PDF and render its pages as images
+        // temp PDF for preview
         var tempPdfPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pdf");
-
         var previewExport = BuildExportOptions(tempPdfPath);
 
         await _pdfService.CreatePDFAsync(_currentHtml, previewExport, ct);
-
         var pdfFile = await StorageFile.GetFileFromPathAsync(tempPdfPath);
         await RenderPdfPagesAsync(pdfFile);
         CurrentPage = PreviewPages.Count > 0 ? 1 : 0;
@@ -131,7 +158,6 @@ public sealed class WireframePageViewModel : ObservableObject
         if (CurrentMarkdownPaths.Count == 0)
             throw new InvalidOperationException("No markdown files loaded.");
 
-        // Ensure same CSS for export
         ApplyBaseHeadCss();
 
         var html = _currentHtml ?? await _mdService.BuildCombinedHtmlAsync(
@@ -140,7 +166,6 @@ public sealed class WireframePageViewModel : ObservableObject
             ct);
 
         var export = BuildExportOptions(outputPdfPath);
-
         await _pdfService.CreatePDFAsync(html, export, ct);
     }
 
@@ -154,7 +179,6 @@ public sealed class WireframePageViewModel : ObservableObject
             using var page = doc.GetPage(i);
             using IRandomAccessStream stream = new InMemoryRandomAccessStream();
 
-            // Render to configured A4-like width in pixels for preview
             var opts = new PdfPageRenderOptions { DestinationWidth = (uint)Export.PreviewDestinationWidthPx };
             await page.RenderToStreamAsync(stream, opts);
 
@@ -170,7 +194,11 @@ public sealed class WireframePageViewModel : ObservableObject
         Formatting.AdditionalHeadHtml = $@"
             <style>
                 :root {{ --mtpdf-border-color: #d0d7de; }}
-                body {{ font-family:{Formatting.BaseFontFamily}; margin:{Formatting.BodyMarginPx}px; }}
+                body {{ font-family:{Formatting.BaseFontFamily}; font-size:12px; margin:{Formatting.BodyMarginPx}px; }}
+                /* Full line fill (justified text) */
+                p, li {{ text-align: justify; text-justify: inter-word; hyphens: auto; }}
+                /* Optional: avoid giant spaces in headings/code */
+                h1, h2, h3, h4, h5, h6, pre, code {{ text-align: left; }}
                 img {{ max-width:100%; }}
                 pre {{ overflow:auto; }}
                 table {{ border-collapse: collapse; border-spacing: 0; width: 100%; }}
@@ -178,7 +206,6 @@ public sealed class WireframePageViewModel : ObservableObject
                 th, td {{ padding: 6px 8px; vertical-align: top; }}
                 thead th {{ background: #f6f8fa; }}
                 tbody tr:nth-child(even) td {{ background:#fbfbfb; }}
-                /* prevent overflow from breaking layout */
                 td, th {{ word-break: break-word; }}
             </style>";
     }
@@ -198,7 +225,7 @@ public sealed class WireframePageViewModel : ObservableObject
             LeftMarginMm = Export.LeftMarginMm,
             ShowPageNumbers = Export.ShowPageNumbers,
             PreviewDestinationWidthPx = Export.PreviewDestinationWidthPx,
-            PreviewDpi = Export.PreviewDpi
+            PreviewDpi = Export.PreviewDpi,
         };
     }
 }

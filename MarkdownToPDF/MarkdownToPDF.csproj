@@ -47,6 +47,9 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>BreadcrumbPageMappings.cs</LastGenOutput>
     </None>
+    <Page Update="Views\SettingsDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\WireframePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -62,6 +65,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Views\SettingsDialog.xaml" />
     <None Remove="Views\WireframePage.xaml" />
   </ItemGroup>
   <ItemGroup>

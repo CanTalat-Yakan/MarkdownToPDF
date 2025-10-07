@@ -16,7 +16,6 @@ public sealed partial class WireframePage : Page
 {
     private WireframePageViewModel ViewModel => (WireframePageViewModel)DataContext;
 
-    // Each page: height 1123 + vertical margins (16 top + 16 bottom) = 1155
     private const double PageSlotHeight = 1123 + 32;
 
     public WireframePage()
@@ -56,7 +55,6 @@ public sealed partial class WireframePage : Page
             }
 
             await ViewModel.LoadFromFilesAsync(files.Select(f => f.Path).ToArray());
-
             ContentTextBlock.Visibility = Visibility.Collapsed;
         }
         catch (Exception ex)
@@ -101,10 +99,13 @@ public sealed partial class WireframePage : Page
         }
     }
 
-    private void Settings_Click(object sender, RoutedEventArgs e)
+    private async void Settings_Click(object sender, RoutedEventArgs e)
     {
-        ContentTextBlock.Text = "Settings placeholder (coming soon).";
-        ContentTextBlock.Visibility = Visibility.Visible;
+        var dlg = new SettingsDialog(ViewModel)
+        {
+            XamlRoot = this.Content.XamlRoot
+        };
+        await dlg.ShowAsync();
     }
 
     private void PreviewScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
@@ -113,22 +114,18 @@ public sealed partial class WireframePage : Page
 
         var sv = (ScrollViewer)sender;
         var offset = sv.VerticalOffset;
-
-        // Determine current page (center of viewport)
         var centerOffset = offset + sv.ViewportHeight / 2.0;
         int index = (int)Math.Floor(centerOffset / PageSlotHeight);
 
-        // Clamp
         if (index < 0) index = 0;
         if (index >= ViewModel.PreviewPages.Count) index = ViewModel.PreviewPages.Count - 1;
 
-        ViewModel.CurrentPage = index + 1; // 1-based
+        ViewModel.CurrentPage = index + 1;
     }
 
     private void PageInputBox_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         if (e.Key != Windows.System.VirtualKey.Enter) return;
-
         if (ViewModel.TotalPages == 0) return;
 
         var text = PageInputBox.Text.Trim();
@@ -136,12 +133,10 @@ public sealed partial class WireframePage : Page
         {
             if (requested < 1) requested = 1;
             if (requested > ViewModel.TotalPages) requested = ViewModel.TotalPages;
-
             ScrollToPage(requested);
         }
         else
         {
-            // Revert invalid text to current page
             PageInputBox.Text = ViewModel.CurrentPage.ToString();
         }
     }
@@ -154,7 +149,6 @@ public sealed partial class WireframePage : Page
 
         var targetOffset = index * PageSlotHeight;
         PreviewScrollViewer.ChangeView(null, targetOffset, null, false);
-        // Update textbox (in case clamped)
         PageInputBox.Text = (index + 1).ToString();
     }
 }

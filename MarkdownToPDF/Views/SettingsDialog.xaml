@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="MarkdownToPDF.Views.SettingsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="PDF / Markdown Settings"
+    PrimaryButtonText="Apply"
+    CloseButtonText="Discard"
+    DefaultButton="Primary"
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+
+	<ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+		<StackPanel Spacing="16" Width="480">
+			<!-- Formatting -->
+			<StackPanel>
+				<TextBlock Text="Formatting" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4"/>
+				<StackPanel Spacing="8">
+					<TextBox Header="Base Font Family"
+                             Text="{x:Bind BaseFontFamily, Mode=TwoWay}" />
+					<NumberBox Header="Body Margin (px)"
+                               Value="{x:Bind BodyMarginPx, Mode=TwoWay}"
+                               Minimum="0" Maximum="200" />
+					<ToggleSwitch Header="Advanced Extensions"
+                                  IsOn="{x:Bind UseAdvancedExtensions, Mode=TwoWay}" />
+					<ToggleSwitch Header="Pipe Tables"
+                                  IsOn="{x:Bind UsePipeTables, Mode=TwoWay}" />
+					<ToggleSwitch Header="Auto Links"
+                                  IsOn="{x:Bind UseAutoLinks, Mode=TwoWay}" />
+					<ToggleSwitch Header="Page Breaks Between Files"
+                                  IsOn="{x:Bind InsertPageBreaksBetweenFiles, Mode=TwoWay}" />
+				</StackPanel>
+			</StackPanel>
+
+			<!-- PDF Options -->
+			<StackPanel>
+				<TextBlock Text="PDF Output" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4"/>
+				<StackPanel Spacing="8">
+					<ComboBox Header="Paper Format"
+                              SelectedItem="{x:Bind PaperFormat, Mode=TwoWay}">
+						<x:String>A4</x:String>
+						<x:String>A3</x:String>
+						<x:String>Letter</x:String>
+					</ComboBox>
+					<ToggleSwitch Header="Landscape"
+                                  IsOn="{x:Bind Landscape, Mode=TwoWay}" />
+					<ToggleSwitch Header="Print Background"
+                                  IsOn="{x:Bind PrintBackground, Mode=TwoWay}" />
+					<ToggleSwitch Header="Prefer CSS Page Size"
+                                  IsOn="{x:Bind PreferCssPageSize, Mode=TwoWay}" />
+					<ToggleSwitch Header="Use CSS @page Margins"
+                                  IsOn="{x:Bind UseCssPageMargins, Mode=TwoWay}" />
+					<ToggleSwitch Header="Show Page Numbers"
+                                  IsOn="{x:Bind ShowPageNumbers, Mode=TwoWay}" />
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<NumberBox Header="Top (mm)" Width="100"
+                                   Value="{x:Bind TopMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
+						<NumberBox Header="Right (mm)" Width="100"
+                                   Value="{x:Bind RightMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
+						<NumberBox Header="Bottom (mm)" Width="100"
+                                   Value="{x:Bind BottomMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
+						<NumberBox Header="Left (mm)" Width="100"
+                                   Value="{x:Bind LeftMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
+					</StackPanel>
+				</StackPanel>
+			</StackPanel>
+
+			<TextBlock Text="Changes apply immediately to the preview when you click Apply." Opacity="0.6" TextWrapping="Wrap"/>
+		</StackPanel>
+	</ScrollViewer>
+</ContentDialog>
