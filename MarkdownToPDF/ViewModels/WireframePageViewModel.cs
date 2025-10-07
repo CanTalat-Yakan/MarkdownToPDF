@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -21,18 +22,34 @@ public sealed class WireframePageViewModel : ObservableObject
 
     public ObservableCollection<BitmapImage> PreviewPages { get; } = new();
 
-    // For backward compatibility (first selected file)
     public string? CurrentMarkdownPath { get; private set; }
     public string? CurrentMarkdownFileName => CurrentMarkdownPath is null ? null : Path.GetFileName(CurrentMarkdownPath);
-
-    // New: full ordered selection
     public IReadOnlyList<string> CurrentMarkdownPaths { get; private set; } = Array.Empty<string>();
-
     public bool CanExport => CurrentMarkdownPaths.Count > 0;
 
     private string? _currentHtml;
 
-    // Centralized options for both preview and export
+    private int _currentPage = 1;
+    public int CurrentPage
+    {
+        get => _currentPage;
+        set
+        {
+            var clamped = value;
+            if (clamped < 1) clamped = 1;
+            if (PreviewPages.Count > 0 && clamped > PreviewPages.Count) clamped = PreviewPages.Count;
+            if (PreviewPages.Count == 0) clamped = 0;
+            if (SetProperty(ref _currentPage, clamped))
+            {
+                OnPropertyChanged(nameof(PageIndicator));
+            }
+        }
+    }
+
+    public int TotalPages => PreviewPages.Count;
+
+    public string PageIndicator => TotalPages == 0 ? "0 / 0" : $"{CurrentPage} / {TotalPages}";
+
     public FormattingOptions Formatting { get; } = new()
     {
         UseAdvancedExtensions = true,
@@ -40,7 +57,6 @@ public sealed class WireframePageViewModel : ObservableObject
         UseAutoLinks = true,
         BodyMarginPx = 0,
         BaseFontFamily = "Segoe UI, sans-serif",
-        // When selecting multiple files, ensure page breaks between them
         InsertPageBreaksBetweenFiles = true
     };
 
@@ -50,12 +66,10 @@ public sealed class WireframePageViewModel : ObservableObject
         Landscape = false,
         PrintBackground = true,
         PreferCssPageSize = true,
-
         TopMarginMm = 25.4,
         RightMarginMm = 25.4,
         BottomMarginMm = 25.4,
         LeftMarginMm = 25.4,
-
         PreviewDestinationWidthPx = 794,
         PreviewDpi = 96
     };
@@ -64,6 +78,18 @@ public sealed class WireframePageViewModel : ObservableObject
     {
         _mdService = mdService;
         _pdfService = pdfService;
+        PreviewPages.CollectionChanged += PreviewPages_CollectionChanged;
+    }
+
+    private void PreviewPages_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (PreviewPages.Count == 0)
+            CurrentPage = 0;
+        else if (CurrentPage == 0)
+            CurrentPage = 1;
+
+        OnPropertyChanged(nameof(PageIndicator));
+        OnPropertyChanged(nameof(TotalPages));
     }
 
     // Backward-compatible single-file entry point
@@ -97,6 +123,7 @@ public sealed class WireframePageViewModel : ObservableObject
 
         var pdfFile = await StorageFile.GetFileFromPathAsync(tempPdfPath);
         await RenderPdfPagesAsync(pdfFile);
+        CurrentPage = PreviewPages.Count > 0 ? 1 : 0;
     }
 
     public async Task ExportToAsync(string outputPdfPath, CancellationToken ct = default)

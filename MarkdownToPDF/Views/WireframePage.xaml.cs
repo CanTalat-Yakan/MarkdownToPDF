@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using MarkdownToPDF.Services;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 using MarkdownToPDF.ViewModels;
@@ -14,6 +15,9 @@ namespace MarkdownToPDF.Views;
 public sealed partial class WireframePage : Page
 {
     private WireframePageViewModel ViewModel => (WireframePageViewModel)DataContext;
+
+    // Each page: height 1123 + vertical margins (16 top + 16 bottom) = 1155
+    private const double PageSlotHeight = 1123 + 32;
 
     public WireframePage()
     {
@@ -43,7 +47,6 @@ public sealed partial class WireframePage : Page
             picker.FileTypeFilter.Add(".markdown");
             InitializeWithWindow.Initialize(picker, App.Hwnd);
 
-            // Allow selecting multiple markdown files
             var files = await picker.PickMultipleFilesAsync();
             if (files is null || files.Count == 0)
             {
@@ -96,5 +99,62 @@ public sealed partial class WireframePage : Page
             ContentTextBlock.Text = $"Export failed. Error: {ex.Message}";
             ContentTextBlock.Visibility = Visibility.Visible;
         }
+    }
+
+    private void Settings_Click(object sender, RoutedEventArgs e)
+    {
+        ContentTextBlock.Text = "Settings placeholder (coming soon).";
+        ContentTextBlock.Visibility = Visibility.Visible;
+    }
+
+    private void PreviewScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (ViewModel.PreviewPages.Count == 0) return;
+
+        var sv = (ScrollViewer)sender;
+        var offset = sv.VerticalOffset;
+
+        // Determine current page (center of viewport)
+        var centerOffset = offset + sv.ViewportHeight / 2.0;
+        int index = (int)Math.Floor(centerOffset / PageSlotHeight);
+
+        // Clamp
+        if (index < 0) index = 0;
+        if (index >= ViewModel.PreviewPages.Count) index = ViewModel.PreviewPages.Count - 1;
+
+        ViewModel.CurrentPage = index + 1; // 1-based
+    }
+
+    private void PageInputBox_KeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key != Windows.System.VirtualKey.Enter) return;
+
+        if (ViewModel.TotalPages == 0) return;
+
+        var text = PageInputBox.Text.Trim();
+        if (int.TryParse(text, out var requested))
+        {
+            if (requested < 1) requested = 1;
+            if (requested > ViewModel.TotalPages) requested = ViewModel.TotalPages;
+
+            ScrollToPage(requested);
+        }
+        else
+        {
+            // Revert invalid text to current page
+            PageInputBox.Text = ViewModel.CurrentPage.ToString();
+        }
+    }
+
+    private void ScrollToPage(int pageNumber)
+    {
+        var index = pageNumber - 1;
+        if (index < 0) index = 0;
+        if (index >= ViewModel.TotalPages) index = ViewModel.TotalPages - 1;
+
+        var targetOffset = index * PageSlotHeight;
+        PreviewScrollViewer.ChangeView(null, targetOffset, null, false);
+        // Update textbox (in case clamped)
+        PageInputBox.Text = (index + 1).ToString();
     }
 }

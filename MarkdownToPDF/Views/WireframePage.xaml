@@ -8,7 +8,6 @@
     mc:Ignorable="d">
 
     <Page.Resources>
-        <!-- A4 at 96 DPI ≈ 794 x 1123 px -->
         <Style x:Key="A4PageCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#DDD"/>
@@ -23,23 +22,76 @@
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="48"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <CommandBar Grid.Row="0">
-            <AppBarButton Icon="Save" Label="Export PDF" Click="ExportPdf_Click"/>
-        </CommandBar>
+        <Grid Grid.Row="0" Background="#2B2B2B">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
 
-        <!-- Scrollable vertical pages with spacing -->
+            <!-- Left: page input -->
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="12,0,0,0"
+                        Spacing="6">
+                <TextBox x:Name="PageInputBox"
+                         Width="56"
+                         Text="{Binding CurrentPage, Mode=OneWay}"
+                         HorizontalContentAlignment="Center"
+                         VerticalContentAlignment="Center"
+                         BorderBrush="#444"
+                         Background="#1E1E1E"
+                         Foreground="White"
+                         KeyDown="PageInputBox_KeyDown"
+                         InputScope="Number"/>
+                <TextBlock Text="of"
+                           VerticalAlignment="Center"
+                           Foreground="White"
+                           Opacity="0.8"/>
+                <TextBlock Text="{Binding TotalPages}"
+                           VerticalAlignment="Center"
+                           Foreground="White"
+                           FontWeight="SemiBold"/>
+            </StackPanel>
+
+            <!-- Right actions -->
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal"
+                        Spacing="4"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Margin="0,0,8,0">
+                <Button x:Name="SettingsButton"
+                        ToolTipService.ToolTip="Settings"
+                        Click="Settings_Click">
+                    <SymbolIcon Symbol="Setting" Foreground="White"/>
+                </Button>
+                <Button x:Name="ExportButton"
+                        ToolTipService.ToolTip="Save / Export PDF"
+                        Click="ExportPdf_Click">
+                    <SymbolIcon Symbol="Save" Foreground="White" Width="24"/>
+                </Button>
+            </StackPanel>
+        </Grid>
+
         <Grid Grid.Row="1">
-            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+            <ScrollViewer x:Name="PreviewScrollViewer"
+                          ViewChanged="PreviewScrollViewer_ViewChanged"
+                          HorizontalScrollBarVisibility="Disabled"
                           VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding PreviewPages}">
+                <ItemsControl x:Name="PagesItemsControl"
+                              ItemsSource="{Binding PreviewPages}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical" HorizontalAlignment="Center"/>
+                            <StackPanel Orientation="Vertical"
+                                        HorizontalAlignment="Center"/>
                         </ItemsPanelTemplate>
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
@@ -52,7 +104,6 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Fallback/status text -->
             <TextBlock x:Name="ContentTextBlock"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
