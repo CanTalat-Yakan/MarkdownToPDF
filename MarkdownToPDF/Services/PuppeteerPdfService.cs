@@ -25,21 +25,44 @@ public sealed class PuppeteerPdfService : IPdfService
 
         if (opts.ShowPageNumbers)
         {
-            // Footer: page number only, lower-right, horizontally aligned with page content edge.
-            // We mimic body horizontal inset by padding-right = RightMarginMm.
-            // Add a small bottom padding (4mm) to pull it upward for readability while respecting the PDF bottom margin.
-            string rightPad = $"{opts.RightMarginMm.ToString("0.##", CultureInfo.InvariantCulture)}mm";
-            const double footerLiftMm = 4; // visual lift inside the margin box
-            string bottomPad = $"{footerLiftMm.ToString("0.##", CultureInfo.InvariantCulture)}mm";
-
             pdfOpts.DisplayHeaderFooter = true;
-            pdfOpts.HeaderTemplate = "<div></div>";
-            pdfOpts.FooterTemplate =
-                $"<div style='width:100%; font-size:12px; " +
-                $"padding:0 {rightPad} {bottomPad} 0; box-sizing:border-box; " +
-                $"text-align:right; font-family:Segoe UI, Arial, sans-serif; color:#444;'>"
-                + "<span class=\"pageNumber\"></span>"
-                + "</div>";
+
+            string header = "<div></div>";
+            string footer = "<div></div>";
+
+            // Compute alignment + whether to place in header or footer
+            (bool top, string align) = opts.PageNumberPosition switch
+            {
+                "TopLeft" => (true, "left"),
+                "TopCenter" => (true, "center"),
+                "TopRight" => (true, "right"),
+                "BottomLeft" => (false, "left"),
+                "BottomCenter" => (false, "center"),
+                _ => (false, "right") // BottomRight default
+            };
+
+            string horizontalPadding = $"{opts.RightMarginMm.ToString("0.##", CultureInfo.InvariantCulture)}mm";
+            string verticalLift = "4mm";
+
+            string numberSpan = "<span class=\"pageNumber\"></span>";
+
+            string block = $"""
+                <div style='
+                width:100%;
+                font-size:12px;
+                padding:{(top ? verticalLift : "0")} {horizontalPadding} {(top ? "0" : verticalLift)} {horizontalPadding};
+                box-sizing:border-box;
+                text-align:{align};
+                font-family:Segoe UI,Arial,
+                sans-serif;
+                color:#444;'>
+                {numberSpan}</div>
+                """;
+
+            if (top) header = block; else footer = block;
+
+            pdfOpts.HeaderTemplate = header;
+            pdfOpts.FooterTemplate = footer;
         }
 
         await page.PdfAsync(opts.OutputPath, pdfOpts);

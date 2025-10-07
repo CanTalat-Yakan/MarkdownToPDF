@@ -8,9 +8,8 @@ namespace MarkdownToPDF.Views;
 
 public sealed partial class SettingsDialog : ContentDialog
 {
-    private readonly WireframePageViewModel _vm;
+    private readonly WireframePageViewModel _viewModel;
 
-    // Formatting draft
     public string BaseFontFamily { get; set; } = "Segoe UI, sans-serif";
     public double BodyMarginPx { get; set; }
     public bool UseAdvancedExtensions { get; set; }
@@ -18,42 +17,39 @@ public sealed partial class SettingsDialog : ContentDialog
     public bool UseAutoLinks { get; set; }
     public bool InsertPageBreaksBetweenFiles { get; set; }
 
-    // Export draft
     public string PaperFormat { get; set; } = "A4";
     public bool Landscape { get; set; }
     public bool PrintBackground { get; set; }
-    public bool PreferCssPageSize { get; set; }
-    public bool UseCssPageMargins { get; set; }
     public bool ShowPageNumbers { get; set; }
+    public string PageNumberPosition { get; set; } = "BottomRight";
     public double TopMarginMm { get; set; }
     public double RightMarginMm { get; set; }
     public double BottomMarginMm { get; set; }
     public double LeftMarginMm { get; set; }
 
-    public SettingsDialog(WireframePageViewModel vm)
+    public SettingsDialog(WireframePageViewModel viewModel)
     {
         InitializeComponent();
-        _vm = vm;
+        _viewModel = viewModel;
 
-        // Seed from current options
-        var f = vm.Formatting;
-        BaseFontFamily = f.BaseFontFamily;
-        BodyMarginPx = f.BodyMarginPx;
-        UseAdvancedExtensions = f.UseAdvancedExtensions;
-        UsePipeTables = f.UsePipeTables;
-        UseAutoLinks = f.UseAutoLinks;
-        InsertPageBreaksBetweenFiles = f.InsertPageBreaksBetweenFiles;
+        var formattingOptions = viewModel.Formatting;
+        BaseFontFamily = formattingOptions.BaseFontFamily;
+        BodyMarginPx = formattingOptions.BodyMarginPx;
+        UseAdvancedExtensions = formattingOptions.UseAdvancedExtensions;
+        UsePipeTables = formattingOptions.UsePipeTables;
+        UseAutoLinks = formattingOptions.UseAutoLinks;
+        InsertPageBreaksBetweenFiles = formattingOptions.InsertPageBreaksBetweenFiles;
 
-        var e = vm.Export;
-        PaperFormat = e.PaperFormat;
-        Landscape = e.Landscape;
-        PrintBackground = e.PrintBackground;
-        PreferCssPageSize = e.PreferCssPageSize;
-        ShowPageNumbers = e.ShowPageNumbers;
-        TopMarginMm = e.TopMarginMm;
-        RightMarginMm = e.RightMarginMm;
-        BottomMarginMm = e.BottomMarginMm;
-        LeftMarginMm = e.LeftMarginMm;
+        var exportOptions = viewModel.Export;
+        PaperFormat = exportOptions.PaperFormat;
+        Landscape = exportOptions.Landscape;
+        PrintBackground = exportOptions.PrintBackground;
+        ShowPageNumbers = exportOptions.ShowPageNumbers;
+        PageNumberPosition = exportOptions.PageNumberPosition;
+        TopMarginMm = exportOptions.TopMarginMm;
+        RightMarginMm = exportOptions.RightMarginMm;
+        BottomMarginMm = exportOptions.BottomMarginMm;
+        LeftMarginMm = exportOptions.LeftMarginMm;
 
         DataContext = this;
     }
@@ -63,7 +59,6 @@ public sealed partial class SettingsDialog : ContentDialog
         var deferral = args.GetDeferral();
         try
         {
-            // Build new option objects
             var newFormatting = new FormattingOptions
             {
                 UseAdvancedExtensions = UseAdvancedExtensions,
@@ -79,23 +74,21 @@ public sealed partial class SettingsDialog : ContentDialog
                 PaperFormat = PaperFormat,
                 Landscape = Landscape,
                 PrintBackground = PrintBackground,
-                PreferCssPageSize = PreferCssPageSize,
                 ShowPageNumbers = ShowPageNumbers,
+                PageNumberPosition = PageNumberPosition,
                 TopMarginMm = TopMarginMm,
                 RightMarginMm = RightMarginMm,
                 BottomMarginMm = BottomMarginMm,
                 LeftMarginMm = LeftMarginMm,
-
-                // Preserve unchanged preview settings
-                PreviewDestinationWidthPx = _vm.Export.PreviewDestinationWidthPx,
-                PreviewDpi = _vm.Export.PreviewDpi
+                PreviewDestinationWidthPx = _viewModel.Export.PreviewDestinationWidthPx,
+                PreviewDpi = _viewModel.Export.PreviewDpi,
+                PreferCssPageSize = false
             };
 
-            await _vm.ApplySettingsAsync(newFormatting, newExport);
+            await _viewModel.ApplySettingsAsync(newFormatting, newExport);
         }
         catch (Exception ex)
         {
-            // Simple inline error notice
             _ = new ContentDialog
             {
                 Title = "Apply Failed",

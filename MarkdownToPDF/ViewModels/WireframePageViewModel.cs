@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.IO;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using MarkdownToPDF.Models;
-using MarkdownToPDF.Services;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Data.Pdf;
 using Windows.Storage;
@@ -64,7 +56,8 @@ public sealed class WireframePageViewModel : ObservableObject
         PaperFormat = "A4",
         Landscape = false,
         PrintBackground = true,
-        PreferCssPageSize = true,
+        PreferCssPageSize = false,
+        PageNumberPosition = "BottomRight",
         TopMarginMm = 25.4,
         RightMarginMm = 25.4,
         BottomMarginMm = 25.4,
@@ -106,7 +99,6 @@ public sealed class WireframePageViewModel : ObservableObject
 
     public async Task ApplySettingsAsync(FormattingOptions newFormatting, ExportOptions newExport, CancellationToken ct = default)
     {
-        // Copy Formatting properties (only those user can edit)
         Formatting.UseAdvancedExtensions = newFormatting.UseAdvancedExtensions;
         Formatting.UsePipeTables = newFormatting.UsePipeTables;
         Formatting.UseAutoLinks = newFormatting.UseAutoLinks;
@@ -114,16 +106,15 @@ public sealed class WireframePageViewModel : ObservableObject
         Formatting.BaseFontFamily = newFormatting.BaseFontFamily;
         Formatting.BodyMarginPx = newFormatting.BodyMarginPx;
 
-        // Copy Export options
         Export.PaperFormat = newExport.PaperFormat;
         Export.Landscape = newExport.Landscape;
         Export.PrintBackground = newExport.PrintBackground;
-        Export.PreferCssPageSize = newExport.PreferCssPageSize;
         Export.TopMarginMm = newExport.TopMarginMm;
         Export.RightMarginMm = newExport.RightMarginMm;
         Export.BottomMarginMm = newExport.BottomMarginMm;
         Export.LeftMarginMm = newExport.LeftMarginMm;
         Export.ShowPageNumbers = newExport.ShowPageNumbers;
+        Export.PageNumberPosition = newExport.PageNumberPosition;
 
         await RebuildPreviewAsync(ct);
     }
@@ -218,12 +209,13 @@ public sealed class WireframePageViewModel : ObservableObject
             PaperFormat = Export.PaperFormat,
             Landscape = Export.Landscape,
             PrintBackground = Export.PrintBackground,
-            PreferCssPageSize = Export.PreferCssPageSize,
+            PreferCssPageSize = false,
+            ShowPageNumbers = Export.ShowPageNumbers,
+            PageNumberPosition = Export.PageNumberPosition,
             TopMarginMm = Export.TopMarginMm,
             RightMarginMm = Export.RightMarginMm,
             BottomMarginMm = Export.BottomMarginMm,
             LeftMarginMm = Export.LeftMarginMm,
-            ShowPageNumbers = Export.ShowPageNumbers,
             PreviewDestinationWidthPx = Export.PreviewDestinationWidthPx,
             PreviewDpi = Export.PreviewDpi,
         };
