@@ -1,8 +1,11 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MarkdownToPDF.Models;
 using MarkdownToPDF.ViewModels;
+using System.Drawing.Text;
 
 namespace MarkdownToPDF.Views;
 
@@ -10,7 +13,10 @@ public sealed partial class SettingsDialog : ContentDialog
 {
     private readonly WireframePageViewModel _viewModel;
 
-    public string BaseFontFamily { get; set; } = "Segoe UI, sans-serif";
+    // Pure family name (without fallback list)
+    public string BaseFontFamily { get; set; } = "Segoe UI";
+    public ObservableCollection<string> FontFamilies { get; } = new();
+
     public double BodyMarginPx { get; set; }
     public bool UseAdvancedExtensions { get; set; }
     public bool UsePipeTables { get; set; }
@@ -21,7 +27,6 @@ public sealed partial class SettingsDialog : ContentDialog
     public bool Landscape { get; set; }
     public bool PrintBackground { get; set; }
 
-    // Converted to DependencyProperty so x:Bind (IsEnabled) updates when toggled
     public bool ShowPageNumbers
     {
         get => (bool)GetValue(ShowPageNumbersProperty);
@@ -47,7 +52,8 @@ public sealed partial class SettingsDialog : ContentDialog
         _viewModel = viewModel;
 
         var formattingOptions = viewModel.Formatting;
-        BaseFontFamily = formattingOptions.BaseFontFamily;
+        // Extract the primary family (strip anything after first comma)
+        BaseFontFamily = ExtractFirstFamily(formattingOptions.BaseFontFamily);
         BodyMarginPx = formattingOptions.BodyMarginPx;
         UseAdvancedExtensions = formattingOptions.UseAdvancedExtensions;
         UsePipeTables = formattingOptions.UsePipeTables;
@@ -66,6 +72,61 @@ public sealed partial class SettingsDialog : ContentDialog
         LeftMarginMm = exportOptions.LeftMarginMm;
 
         DataContext = this;
+        LoadFonts();
+    }
+
+    private void LoadFonts()
+    {
+        try
+        {
+            using var installed = new InstalledFontCollection();
+            var names = installed.Families
+                .Select(f => f.Name)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(n => n, StringComparer.OrdinalIgnoreCase);
+
+            foreach (var n in names)
+                FontFamilies.Add(n);
+        }
+        catch
+        {
+            // Fallback list if enumeration fails
+            string[] fallback =
+            {
+                "Segoe UI","Calibri","Arial","Times New Roman","Georgia",
+                "Cambria","Consolas","Courier New","Cascadia Mono","Verdana",
+                "Tahoma","Trebuchet MS"
+            };
+            foreach (var f in fallback.Distinct())
+                FontFamilies.Add(f);
+        }
+
+        // Ensure current selection is present
+        if (!FontFamilies.Contains(BaseFontFamily))
+            FontFamilies.Insert(0, BaseFontFamily);
+    }
+
+    private static string ExtractFirstFamily(string cssValue)
+    {
+        if (string.IsNullOrWhiteSpace(cssValue))
+            return "Segoe UI";
+        var first = cssValue.Split(',')[0].Trim().Trim('\'', '"');
+        return string.IsNullOrWhiteSpace(first) ? "Segoe UI" : first;
+    }
+
+    private static string BuildCssFontStack(string primary)
+    {
+        if (string.IsNullOrWhiteSpace(primary))
+            primary = "Segoe UI";
+
+        // Basic heuristic: monospace stack for common dev fonts
+        var lower = primary.ToLowerInvariant();
+        if (lower.Contains("mono") || lower.Contains("consolas") || lower.Contains("courier"))
+            return $"{primary}, Consolas, 'Courier New', monospace";
+
+        // Default sans-serif stack
+        return $"{primary}, 'Segoe UI', Arial, Helvetica, sans-serif";
     }
 
     private async void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -79,7 +140,7 @@ public sealed partial class SettingsDialog : ContentDialog
                 UsePipeTables = UsePipeTables,
                 UseAutoLinks = UseAutoLinks,
                 InsertPageBreaksBetweenFiles = InsertPageBreaksBetweenFiles,
-                BaseFontFamily = BaseFontFamily,
+                BaseFontFamily = BuildCssFontStack(BaseFontFamily),
                 BodyMarginPx = BodyMarginPx
             };
 
