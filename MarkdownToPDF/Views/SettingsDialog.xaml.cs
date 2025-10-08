@@ -27,15 +27,35 @@ public sealed partial class SettingsDialog : ContentDialog
         get => (bool)GetValue(ShowPageNumbersProperty);
         set => SetValue(ShowPageNumbersProperty, value);
     }
-
     public static readonly DependencyProperty ShowPageNumbersProperty =
         DependencyProperty.Register(nameof(ShowPageNumbers), typeof(bool), typeof(SettingsDialog), new PropertyMetadata(false));
+
+    public bool ShowPageNumberOnFirstPage { get; set; } = true;
 
     public string PageNumberPosition { get; set; } = "BottomRight";
     public double TopMarginMm { get; set; }
     public double RightMarginMm { get; set; }
     public double BottomMarginMm { get; set; }
     public double LeftMarginMm { get; set; }
+
+    public string HeaderNumberingPattern { get; set; } = "1.1.1";
+
+    public bool AddTableOfContents
+    {
+        get => (bool)GetValue(AddTableOfContentsProperty);
+        set => SetValue(AddTableOfContentsProperty, value);
+    }
+    public static readonly DependencyProperty AddTableOfContentsProperty =
+        DependencyProperty.Register(
+            nameof(AddTableOfContents),
+            typeof(bool),
+            typeof(SettingsDialog),
+            new PropertyMetadata(false));
+
+    public bool IndentTableOfContents { get; set; }
+    public string TableOfContentsBulletStyle { get; set; } = "-";
+    public string TableOfContentsHeaderText { get; set; } = "Table of Contents";
+    public bool TableOfContentsAfterFirstFile { get; set; }
 
     public SettingsDialog(WireframePageViewModel viewModel)
     {
@@ -58,10 +78,18 @@ public sealed partial class SettingsDialog : ContentDialog
         PrintBackground = exportOptions.PrintBackground;
         ShowPageNumbers = exportOptions.ShowPageNumbers;
         PageNumberPosition = exportOptions.PageNumberPosition;
+        ShowPageNumberOnFirstPage = exportOptions.ShowPageNumberOnFirstPage;
         TopMarginMm = exportOptions.TopMarginMm;
         RightMarginMm = exportOptions.RightMarginMm;
         BottomMarginMm = exportOptions.BottomMarginMm;
         LeftMarginMm = exportOptions.LeftMarginMm;
+
+        HeaderNumberingPattern = formattingOptions.HeaderNumberingPattern;
+        AddTableOfContents = formattingOptions.AddTableOfContents;
+        IndentTableOfContents = formattingOptions.IndentTableOfContents;
+        TableOfContentsBulletStyle = formattingOptions.TableOfContentsBulletStyle;
+        TableOfContentsHeaderText = formattingOptions.TableOfContentsHeaderText;
+        TableOfContentsAfterFirstFile = formattingOptions.TableOfContentsAfterFirstFile;
 
         DataContext = this;
         LoadFonts();
@@ -117,6 +145,9 @@ public sealed partial class SettingsDialog : ContentDialog
     {
         var root = XamlRoot;
 
+        var trimmedPattern = HeaderNumberingPattern?.Trim() ?? string.Empty;
+        bool enableNumbering = !string.IsNullOrWhiteSpace(trimmedPattern);
+
         var newFormatting = new FormattingOptions
         {
             UseAdvancedExtensions = UseAdvancedExtensions,
@@ -126,7 +157,14 @@ public sealed partial class SettingsDialog : ContentDialog
             BaseFontFamily = BuildCssFontStack(BaseFontFamily),
             BodyMarginPx = BodyMarginPx,
             BodyFontSizePx = BodyFontSizePx,
-            BodyTextAlignment = BodyTextAlignment
+            BodyTextAlignment = BodyTextAlignment,
+            AddHeaderNumbering = enableNumbering,
+            HeaderNumberingPattern = enableNumbering ? trimmedPattern : string.Empty,
+            AddTableOfContents = AddTableOfContents,
+            IndentTableOfContents = IndentTableOfContents,
+            TableOfContentsBulletStyle = TableOfContentsBulletStyle,
+            TableOfContentsHeaderText = TableOfContentsHeaderText,
+            TableOfContentsAfterFirstFile = TableOfContentsAfterFirstFile
         };
 
         var newExport = new ExportOptions
@@ -136,16 +174,16 @@ public sealed partial class SettingsDialog : ContentDialog
             PrintBackground = PrintBackground,
             ShowPageNumbers = ShowPageNumbers,
             PageNumberPosition = PageNumberPosition,
+            ShowPageNumberOnFirstPage = ShowPageNumberOnFirstPage,
             TopMarginMm = TopMarginMm,
             RightMarginMm = RightMarginMm,
             BottomMarginMm = BottomMarginMm,
             LeftMarginMm = LeftMarginMm,
             PreviewDestinationWidthPx = _viewModel.Export.PreviewDestinationWidthPx,
-            PreviewDpi = _viewModel.Export.PreviewDpi,
+            PreviewDpi = _viewModel.Export.PreviewDpi
         };
 
-        Hide(); // close immediately
-
+        Hide();
         try
         {
             await _viewModel.ApplySettingsAsync(newFormatting, newExport);

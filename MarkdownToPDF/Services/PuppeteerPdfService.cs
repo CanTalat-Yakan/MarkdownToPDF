@@ -29,7 +29,6 @@ public sealed class PuppeteerPdfService : IPdfService
             string header = "<div></div>";
             string footer = "<div></div>";
 
-            // Compute alignment + whether to place in header or footer
             (bool top, string align) = opts.PageNumberPosition switch
             {
                 "TopLeft" => (true, "left"),
@@ -37,13 +36,15 @@ public sealed class PuppeteerPdfService : IPdfService
                 "TopRight" => (true, "right"),
                 "BottomLeft" => (false, "left"),
                 "BottomCenter" => (false, "center"),
-                _ => (false, "right") // BottomRight default
+                _ => (false, "right")
             };
 
             string horizontalPadding = $"{opts.RightMarginMm.ToString("0.##", CultureInfo.InvariantCulture)}mm";
             string verticalLift = "4mm";
 
-            string numberSpan = "<span class=\"pageNumber\"></span>";
+            string numberContent = "<span class=\"pageNumber\"></span>";
+            if (!opts.ShowPageNumberOnFirstPage)
+                numberContent = "<span/>";
 
             string block = $"""
                 <div style='
@@ -52,10 +53,9 @@ public sealed class PuppeteerPdfService : IPdfService
                 padding:{(top ? verticalLift : "0")} {horizontalPadding} {(top ? "0" : verticalLift)} {horizontalPadding};
                 box-sizing:border-box;
                 text-align:{align};
-                font-family:Segoe UI,Arial,
-                sans-serif;
+                font-family:Segoe UI,Arial,sans-serif;
                 color:#444;'>
-                {numberSpan}</div>
+                {numberContent}</div>
                 """;
 
             if (top) header = block; else footer = block;

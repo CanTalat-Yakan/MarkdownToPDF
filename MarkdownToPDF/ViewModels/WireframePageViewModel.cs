@@ -32,41 +32,18 @@ public sealed class WireframePageViewModel : ObservableObject
             if (PreviewPages.Count > 0 && clamped > PreviewPages.Count) clamped = PreviewPages.Count;
             if (PreviewPages.Count == 0) clamped = 0;
             if (SetProperty(ref _currentPage, clamped))
+            {
                 OnPropertyChanged(nameof(PageIndicator));
+            }
         }
     }
 
     public int TotalPages => PreviewPages.Count;
     public string PageIndicator => TotalPages == 0 ? "0 / 0" : $"{CurrentPage} / {TotalPages}";
 
-    public FormattingOptions Formatting { get; } = new()
-    {
-        UseAdvancedExtensions = true,
-        UsePipeTables = true,
-        UseAutoLinks = true,
-        BodyMarginPx = 0,
-        BodyFontSizePx = 12,
-        BaseFontFamily = "Segoe UI, sans-serif",
-        InsertPageBreaksBetweenFiles = false,
-        BodyTextAlignment = "Justify"
-    };
+    public FormattingOptions Formatting { get; } = new();
+    public ExportOptions Export { get; } = new();
 
-    public ExportOptions Export { get; } = new()
-    {
-        PaperFormat = "A4",
-        Landscape = false,
-        PrintBackground = true,
-        ShowPageNumbers = true,
-        PageNumberPosition = "BottomRight",
-        TopMarginMm = 25.4,
-        RightMarginMm = 25.4,
-        BottomMarginMm = 25.4,
-        LeftMarginMm = 25.4,
-        PreviewDestinationWidthPx = 794,
-        PreviewDpi = 96,
-    };
-
-    // Dynamic preview page dimensions based on selected paper format + orientation + preview DPI.
     public int PagePreviewWidthPx => ComputePagePixelSize().widthPx;
     public int PagePreviewHeightPx => ComputePagePixelSize().heightPx;
 
@@ -108,7 +85,6 @@ public sealed class WireframePageViewModel : ObservableObject
             !string.Equals(Export.PaperFormat, newExport.PaperFormat, StringComparison.OrdinalIgnoreCase) ||
             Export.PreviewDpi != newExport.PreviewDpi;
 
-        // Formatting
         Formatting.UseAdvancedExtensions = newFormatting.UseAdvancedExtensions;
         Formatting.UsePipeTables = newFormatting.UsePipeTables;
         Formatting.UseAutoLinks = newFormatting.UseAutoLinks;
@@ -118,7 +94,14 @@ public sealed class WireframePageViewModel : ObservableObject
         Formatting.BodyFontSizePx = newFormatting.BodyFontSizePx;
         Formatting.BodyTextAlignment = newFormatting.BodyTextAlignment;
 
-        // Export
+        Formatting.AddHeaderNumbering = newFormatting.AddHeaderNumbering;
+        Formatting.HeaderNumberingPattern = newFormatting.HeaderNumberingPattern;
+        Formatting.AddTableOfContents = newFormatting.AddTableOfContents;
+        Formatting.IndentTableOfContents = newFormatting.IndentTableOfContents;
+        Formatting.TableOfContentsBulletStyle = newFormatting.TableOfContentsBulletStyle;
+        Formatting.TableOfContentsHeaderText = newFormatting.TableOfContentsHeaderText;
+        Formatting.TableOfContentsAfterFirstFile = newFormatting.TableOfContentsAfterFirstFile;
+
         Export.PaperFormat = newExport.PaperFormat;
         Export.Landscape = newExport.Landscape;
         Export.PrintBackground = newExport.PrintBackground;
@@ -127,12 +110,12 @@ public sealed class WireframePageViewModel : ObservableObject
         Export.BottomMarginMm = newExport.BottomMarginMm;
         Export.LeftMarginMm = newExport.LeftMarginMm;
         Export.ShowPageNumbers = newExport.ShowPageNumbers;
+        Export.ShowPageNumberOnFirstPage = newExport.ShowPageNumberOnFirstPage;
         Export.PageNumberPosition = newExport.PageNumberPosition;
         Export.PreviewDpi = newExport.PreviewDpi;
 
         if (layoutChanged)
         {
-            // Recalculate preview width used for PDF page rendering -> affects clarity of preview images.
             Export.PreviewDestinationWidthPx = PagePreviewWidthPx;
             OnPropertyChanged(nameof(PagePreviewWidthPx));
             OnPropertyChanged(nameof(PagePreviewHeightPx));
@@ -143,35 +126,25 @@ public sealed class WireframePageViewModel : ObservableObject
 
     private (int widthPx, int heightPx) ComputePagePixelSize()
     {
-        // Sizes in millimeters for supported formats (portrait orientation baseline)
-        // A4: 210 x 297 mm, A3: 297 x 420 mm, Letter: 215.9 x 279.4 mm
         var (wMm, hMm) = GetPaperSizeMm(Export.PaperFormat);
         if (Export.Landscape)
             (wMm, hMm) = (hMm, wMm);
 
         double dpi = Export.PreviewDpi <= 0 ? 96 : Export.PreviewDpi;
-
-        // Convert mm -> inches then -> pixels
         double wPx = (wMm / 25.4d) * dpi;
         double hPx = (hMm / 25.4d) * dpi;
 
-        return (widthPx: (int)Math.Round(wPx, MidpointRounding.AwayFromZero),
-                heightPx: (int)Math.Round(hPx, MidpointRounding.AwayFromZero));
+        return ((int)Math.Round(wPx, MidpointRounding.AwayFromZero),
+                (int)Math.Round(hPx, MidpointRounding.AwayFromZero));
     }
 
     private static (double wMm, double hMm) GetPaperSizeMm(string? format)
-    {
-        if (string.IsNullOrWhiteSpace(format))
-            return (210, 297); // default A4
-
-        switch (format.Trim().ToUpperInvariant())
+        => (format ?? "A4").Trim().ToUpperInvariant() switch
         {
-            case "A3": return (297, 420);
-            case "LETTER": return (215.9, 279.4); // 8.5 x 11 in
-            case "A4":
-            default: return (210, 297);
-        }
-    }
+            "A3" => (297, 420),
+            "LETTER" => (215.9, 279.4),
+            _ => (210, 297) // A4 default
+        };
 
     private async Task RebuildPreviewAsync(CancellationToken ct)
     {
@@ -188,7 +161,6 @@ public sealed class WireframePageViewModel : ObservableObject
         var models = CurrentMarkdownPaths.Select(p => new MarkdownFileModel(p)).ToArray();
         _currentHtml = await _mdService.BuildCombinedHtmlAsync(models, Formatting, ct);
 
-        // temp PDF for preview
         var tempPdfPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.pdf");
         var previewExport = BuildExportOptions(tempPdfPath);
 
@@ -250,15 +222,19 @@ public sealed class WireframePageViewModel : ObservableObject
                 :root {{ --mtpdf-border-color: #d0d7de; }}
                 body {{ font-family:{Formatting.BaseFontFamily}; font-size:{Formatting.BodyFontSizePx}px; margin:{Formatting.BodyMarginPx}px; }}
                 {paragraphRule}
-                h1, h2, h3, h4, h5, h6, pre, code {{ text-align: left; }}
+                h1 {{ text-align: center; }}
+                h2 {{ margin-top: 2.2em; }}
+                h2, h3, h4, h5, h6, pre, code {{ text-align: left; }}
                 img {{ max-width:100%; }}
                 pre {{ overflow:auto; }}
                 table {{ border-collapse: collapse; border-spacing: 0; width: 100%; }}
                 table, th, td {{ border: 1px solid var(--mtpdf-border-color); }}
+                table th {{ white-space:nowrap; }}
                 th, td {{ padding: 6px 8px; vertical-align: top; }}
                 thead th {{ background: #f6f8fa; }}
                 tbody tr:nth-child(even) td {{ background:#fbfbfb; }}
                 td, th {{ word-break: break-word; }}
+                a, a:visited {{ color:#000; text-decoration: underline; }}
             </style>";
     }
 
@@ -272,6 +248,7 @@ public sealed class WireframePageViewModel : ObservableObject
             PrintBackground = Export.PrintBackground,
             ShowPageNumbers = Export.ShowPageNumbers,
             PageNumberPosition = Export.PageNumberPosition,
+            ShowPageNumberOnFirstPage = Export.ShowPageNumberOnFirstPage,
             TopMarginMm = Export.TopMarginMm,
             RightMarginMm = Export.RightMarginMm,
             BottomMarginMm = Export.BottomMarginMm,

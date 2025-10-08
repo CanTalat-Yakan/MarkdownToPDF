@@ -9,6 +9,7 @@ public sealed class ExportOptions
 
     public bool ShowPageNumbers { get; set; } = true;
     public string PageNumberPosition { get; set; } = "BottomRight";
+    public bool ShowPageNumberOnFirstPage { get; set; } = true;
 
     public double TopMarginMm { get; set; } = 25.4;
     public double RightMarginMm { get; set; } = 25.4;
