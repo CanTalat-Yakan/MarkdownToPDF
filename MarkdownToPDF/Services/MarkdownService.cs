@@ -30,8 +30,17 @@ public sealed class MarkdownService : IMarkdownService
         var pipeline = builder.Build();
 
         var bodyHtml = Markdown.ToHtml(sb.ToString(), pipeline);
-        var html = $@"<!DOCTYPE html>
-                    <html><head><meta charset='utf-8'>{opts.AdditionalHeadHtml}</head><body>{bodyHtml}</body></html>";
+        var html = $"""
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <meta charset='utf-8'>{opts.AdditionalHeadHtml}
+                </head>
+                <body>
+                    {bodyHtml}
+                </body>
+            </html>
+            """;
         return Task.FromResult(html);
     }
 }

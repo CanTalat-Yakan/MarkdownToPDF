@@ -19,7 +19,6 @@ public sealed class PuppeteerPdfService : IPdfService
             Format = opts.PaperFormat switch { "A3" => PaperFormat.A3, "A4" => PaperFormat.A4, "Letter" => PaperFormat.Letter, _ => PaperFormat.A4 },
             Landscape = opts.Landscape,
             PrintBackground = opts.PrintBackground,
-            PreferCSSPageSize = opts.PreferCssPageSize,
             MarginOptions = BuildMargins(opts)
         };
 

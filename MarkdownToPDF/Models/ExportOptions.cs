@@ -3,12 +3,11 @@
 public sealed class ExportOptions
 {
     public string OutputPath { get; set; } = string.Empty;
-    public bool Landscape { get; set; }
+    public bool Landscape { get; set; } = false;
     public bool PrintBackground { get; set; } = true;
-    public bool PreferCssPageSize { get; set; } = true;
     public string PaperFormat { get; set; } = "A4";
-    public bool ShowPageNumbers { get; set; }
 
+    public bool ShowPageNumbers { get; set; } = true;
     public string PageNumberPosition { get; set; } = "BottomRight";
 
     public double TopMarginMm { get; set; } = 25.4;

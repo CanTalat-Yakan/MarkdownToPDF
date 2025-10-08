@@ -47,7 +47,7 @@ public sealed class WireframePageViewModel : ObservableObject
         BodyMarginPx = 0,
         BodyFontSizePx = 12,
         BaseFontFamily = "Segoe UI, sans-serif",
-        InsertPageBreaksBetweenFiles = true,
+        InsertPageBreaksBetweenFiles = false,
         BodyTextAlignment = "Justify"
     };
 
@@ -56,7 +56,7 @@ public sealed class WireframePageViewModel : ObservableObject
         PaperFormat = "A4",
         Landscape = false,
         PrintBackground = true,
-        PreferCssPageSize = false,
+        ShowPageNumbers = true,
         PageNumberPosition = "BottomRight",
         TopMarginMm = 25.4,
         RightMarginMm = 25.4,
@@ -270,7 +270,6 @@ public sealed class WireframePageViewModel : ObservableObject
             PaperFormat = Export.PaperFormat,
             Landscape = Export.Landscape,
             PrintBackground = Export.PrintBackground,
-            PreferCssPageSize = false,
             ShowPageNumbers = Export.ShowPageNumbers,
             PageNumberPosition = Export.PageNumberPosition,
             TopMarginMm = Export.TopMarginMm,

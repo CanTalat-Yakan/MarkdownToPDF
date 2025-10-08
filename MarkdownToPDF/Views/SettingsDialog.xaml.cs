@@ -142,7 +142,6 @@ public sealed partial class SettingsDialog : ContentDialog
             LeftMarginMm = LeftMarginMm,
             PreviewDestinationWidthPx = _viewModel.Export.PreviewDestinationWidthPx,
             PreviewDpi = _viewModel.Export.PreviewDpi,
-            PreferCssPageSize = false
         };
 
         Hide(); // close immediately
