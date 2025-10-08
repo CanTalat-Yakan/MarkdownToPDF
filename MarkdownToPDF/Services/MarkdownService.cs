@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Markdig;
+using MarkdownToPDF.Models;
 
 namespace MarkdownToPDF.Services;
 
@@ -11,6 +12,9 @@ public sealed class MarkdownService : IMarkdownService
 
     private const string TocPlaceholder = "<!--__TOC_PLACEHOLDER__-->";
     private const string PageBreakHtml = "<div style='page-break-after: always;'></div>";
+
+    private List<HeadingInfo> _extractedHeadings = new();
+    public IReadOnlyList<HeadingInfo> GetExtractedHeadings() => _extractedHeadings;
 
     public Task<string> BuildCombinedHtmlAsync(IReadOnlyList<MarkdownFileModel> orderedFiles,
         FormattingOptions opts, CancellationToken ct)
@@ -48,6 +52,8 @@ public sealed class MarkdownService : IMarkdownService
 
         if (opts.AddHeaderNumbering || opts.AddTableOfContents)
             combinedMarkdown = ProcessHeadersAndToc(combinedMarkdown, opts);
+        else
+            _extractedHeadings = new(); // no headers processed
 
         var builder = new MarkdownPipelineBuilder();
         if (opts.UseAdvancedExtensions) builder = builder.UseAdvancedExtensions();
@@ -102,7 +108,7 @@ public sealed class MarkdownService : IMarkdownService
             int markdownLevel = m.Groups[1].Value.Length;
             string rawText = m.Groups[2].Value.Trim();
 
-            bool isSuperHeading = markdownLevel == 1; // # reserved “huge”
+            bool isSuperHeading = markdownLevel == 1;
             int logicalLevel = isSuperHeading ? 0 : markdownLevel - 1;
 
             if (!suppressFirstFileHeaders)
@@ -135,7 +141,6 @@ public sealed class MarkdownService : IMarkdownService
 
             string anchor = BuildAnchor(rawText, numbering, keepDots: false);
 
-            // Mutate line: only add numbering if not suppressed and allowed
             if (!suppressFirstFileHeaders && numberingEnabled && !isSuperHeading && numbering.Length > 0)
                 lines[i] = $"{new string('#', markdownLevel)} {numbering} {rawText} {{#{anchor}}}";
             else
@@ -144,6 +149,19 @@ public sealed class MarkdownService : IMarkdownService
             if (!suppressFirstFileHeaders)
                 headers.Add(new HeaderInfo(markdownLevel, logicalLevel, rawText, numbering, anchor));
         }
+
+        // Project headers to public HeadingInfo (H2+ only; H2 => Level 1)
+        _extractedHeadings = headers
+            .Where(h => h.MarkdownLevel > 1)
+            .Select(h => new HeadingInfo
+            {
+                Level = h.LogicalLevel, // H2 => 1
+                Text = string.IsNullOrEmpty(h.Numbering) ? h.Text : $"{h.Numbering} {h.Text}",
+                Anchor = h.Anchor,
+                Y = 0,
+                Page = 0
+            })
+            .ToList();
 
         if (opts.AddTableOfContents && headers.Count > 0)
         {
@@ -215,12 +233,10 @@ public sealed class MarkdownService : IMarkdownService
     {
         string numPart = numbering.TrimEnd('.');
         if (!keepDots) numPart = numPart.Replace('.', '-');
-
         string text = headerText.ToLowerInvariant();
         text = Regex.Replace(text, @"[^\w\s-]", "");
         text = Regex.Replace(text, @"\s+", "-");
         text = Regex.Replace(text, "-{2,}", "-").Trim('-');
-
         string anchor = string.IsNullOrEmpty(numPart) ? text : $"{numPart}-{text}";
         return anchor.Trim('-');
     }
@@ -237,23 +253,18 @@ public sealed class MarkdownService : IMarkdownService
 
         foreach (var h in headers)
         {
-            // Skip H1 in TOC
             if (h.MarkdownLevel == 1) continue;
-
             int indentLevel = h.LogicalLevel <= 1 ? 0 : h.LogicalLevel - 1;
             string indent = opts.IndentTableOfContents
                 ? new string(' ', indentLevel * 2)
                 : string.Empty;
-
             string labelCore = string.IsNullOrEmpty(h.Numbering) ? h.Text : $"{h.Numbering} {h.Text}";
             string bullet = numbered ? "1." : "-";
             sb.AppendLine($"{indent}{bullet} [{labelCore}](#{h.Anchor})");
         }
-
         sb.AppendLine();
         sb.AppendLine(PageBreakHtml);
         sb.AppendLine();
-
         return sb.ToString().TrimEnd('\r', '\n');
     }
 }

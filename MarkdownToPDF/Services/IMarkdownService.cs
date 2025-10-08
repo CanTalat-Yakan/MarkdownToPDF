@@ -1,4 +1,6 @@
-﻿namespace MarkdownToPDF.Services;
+﻿using MarkdownToPDF.Models;
+
+namespace MarkdownToPDF.Services;
 
 public interface IMarkdownService
 {
@@ -6,4 +8,6 @@ public interface IMarkdownService
         IReadOnlyList<MarkdownFileModel> orderedFiles,
         FormattingOptions options,
         CancellationToken ct);
+
+    IReadOnlyList<HeadingInfo> GetExtractedHeadings(); // Exposes latest extracted headings (H2+)
 }

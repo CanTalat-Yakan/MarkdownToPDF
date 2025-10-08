@@ -6,6 +6,9 @@ namespace MarkdownToPDF.Services;
 
 public sealed class PuppeteerPdfService : IPdfService
 {
+    private readonly IMarkdownService _markdownService;
+    public PuppeteerPdfService(IMarkdownService markdownService) => _markdownService = markdownService;
+
     public async Task CreatePDFAsync(string html, ExportOptions opts, CancellationToken ct)
     {
         await new BrowserFetcher().DownloadAsync();
@@ -65,6 +68,9 @@ public sealed class PuppeteerPdfService : IPdfService
         }
 
         await page.PdfAsync(opts.OutputPath, pdfOpts);
+
+        var headings = _markdownService.GetExtractedHeadings();
+        PdfOutlineWriter.InjectOutline(opts.OutputPath, headings);
     }
 
     private static MarginOptions BuildMargins(ExportOptions opts)
