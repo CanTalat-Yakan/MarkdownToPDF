@@ -20,7 +20,21 @@ public sealed partial class SettingsDialog : ContentDialog
     public string PaperFormat { get; set; } = "A4";
     public bool Landscape { get; set; }
     public bool PrintBackground { get; set; }
-    public bool ShowPageNumbers { get; set; }
+
+    // Converted to DependencyProperty so x:Bind (IsEnabled) updates when toggled
+    public bool ShowPageNumbers
+    {
+        get => (bool)GetValue(ShowPageNumbersProperty);
+        set => SetValue(ShowPageNumbersProperty, value);
+    }
+
+    public static readonly DependencyProperty ShowPageNumbersProperty =
+        DependencyProperty.Register(
+            nameof(ShowPageNumbers),
+            typeof(bool),
+            typeof(SettingsDialog),
+            new PropertyMetadata(false));
+
     public string PageNumberPosition { get; set; } = "BottomRight";
     public double TopMarginMm { get; set; }
     public double RightMarginMm { get; set; }

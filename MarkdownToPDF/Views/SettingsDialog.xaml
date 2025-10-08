@@ -5,74 +5,222 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:dev="using:DevWinUI"
     mc:Ignorable="d"
     Title="PDF / Markdown Settings"
     PrimaryButtonText="Apply"
     CloseButtonText="Discard"
     DefaultButton="Primary"
-    PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
+    FullSizeDesired="True"
+    HorizontalAlignment="Center">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="16" Width="480">
-            <!-- Formatting -->
-            <StackPanel>
-                <TextBlock Text="Formatting" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                <StackPanel Spacing="8">
-                    <TextBox Header="Base Font Family"
-                             Text="{x:Bind BaseFontFamily, Mode=TwoWay}" />
-                    <NumberBox Header="Body Margin (px)"
-                               Value="{x:Bind BodyMarginPx, Mode=TwoWay}"
-                               Minimum="0" Maximum="200" />
-                    <ToggleSwitch Header="Advanced Extensions"
-                                  IsOn="{x:Bind UseAdvancedExtensions, Mode=TwoWay}" />
-                    <ToggleSwitch Header="Pipe Tables"
-                                  IsOn="{x:Bind UsePipeTables, Mode=TwoWay}" />
-                    <ToggleSwitch Header="Auto Links"
-                                  IsOn="{x:Bind UseAutoLinks, Mode=TwoWay}" />
-                    <ToggleSwitch Header="Page Breaks Between Files"
-                                  IsOn="{x:Bind InsertPageBreaksBetweenFiles, Mode=TwoWay}" />
-                </StackPanel>
-            </StackPanel>
+    <!-- Override internal template width cap -->
+    <ContentDialog.Resources>
+        <!-- Native ContentDialog style references these theme resources -->
+        <x:Double x:Key="ContentDialogMaxWidth">1200</x:Double>
+        <x:Double x:Key="ContentDialogMinWidth">900</x:Double>
+    </ContentDialog.Resources>
 
-            <!-- PDF Options -->
-            <StackPanel>
-                <TextBlock Text="PDF Output" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,4"/>
-                <StackPanel Spacing="8">
-                    <ComboBox Header="Paper Format"
-                              SelectedItem="{x:Bind PaperFormat, Mode=TwoWay}">
+    <!-- Scroll container to handle vertical overflow -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+
+        <!-- Use a Grid to let wide layouts breathe a bit more -->
+        <Grid Margin="0"
+              RowSpacing="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Main vertical layout -->
+            <StackPanel Spacing="8" Padding="24" HorizontalAlignment="Stretch">
+
+                <!-- ===================== MARKDOWN / FORMATTING SECTION ===================== -->
+                <TextBlock Text="Markdown"
+                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                           Margin="0,0,0,4"/>
+
+                <dev:SettingsExpander Header="Formatting &amp; Features"
+                                      Description="Typography and Markdown extension options"
+                                      IsExpanded="True">
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE8D2;"/>
+                    </dev:SettingsExpander.HeaderIcon>
+                    <dev:SettingsExpander.Items>
+                        <dev:SettingsCard Header="Body Margin"
+                                          Description="Padding inside page content (pixels).">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE739;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <NumberBox Value="{x:Bind BodyMarginPx, Mode=TwoWay}"
+                                       Minimum="0" Maximum="200"
+                                       SpinButtonPlacementMode="Compact"
+                                       Width="140"/>
+                        </dev:SettingsCard>
+
+                        <dev:SettingsCard Header="Page Breaks Between Files"
+                                          Description="Insert a forced page break when concatenating multiple markdown files.">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE8FD;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind InsertPageBreaksBetweenFiles, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
+
+                        <dev:SettingsCard Header="Advanced Extensions"
+                                          Description="Enable footnotes, task lists, strikethrough, smart punctuation, etc.">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE90F;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind UseAdvancedExtensions, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
+
+                        <dev:SettingsCard Header="Pipe Tables"
+                                          Description="GitHub style pipe table support.">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE14C;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind UsePipeTables, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
+
+                        <dev:SettingsCard Header="Auto Links"
+                                          Description="Plain URLs and emails become clickable links.">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE71B;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind UseAutoLinks, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
+
+                <!-- ===================== PAGE LAYOUT SECTION ===================== -->
+                <TextBlock Text="Page Layout"
+                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                           Margin="0,12,0,4"/>
+
+                <dev:SettingsExpander Header="Paper Format"
+                                      Description="Physical paper size used when rendering to PDF."
+                                      IsExpanded="False">
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE7B8;"/>
+                    </dev:SettingsExpander.HeaderIcon>
+
+                    <ComboBox SelectedItem="{x:Bind PaperFormat, Mode=TwoWay}"
+                              Width="180">
                         <x:String>A4</x:String>
                         <x:String>A3</x:String>
                         <x:String>Letter</x:String>
                     </ComboBox>
-                    <ToggleSwitch Header="Landscape"
-                                  IsOn="{x:Bind Landscape, Mode=TwoWay}" />
-                    <ToggleSwitch Header="Print Background"
-                                  IsOn="{x:Bind PrintBackground, Mode=TwoWay}" />
-                    <ToggleSwitch Header="Show Page Numbers"
-                                  IsOn="{x:Bind ShowPageNumbers, Mode=TwoWay}" />
-                    <ComboBox Header="Page Number Position"
-                              SelectedItem="{x:Bind PageNumberPosition, Mode=TwoWay}">
-                        <x:String>TopLeft</x:String>
-                        <x:String>TopCenter</x:String>
-                        <x:String>TopRight</x:String>
-                        <x:String>BottomLeft</x:String>
-                        <x:String>BottomCenter</x:String>
-                        <x:String>BottomRight</x:String>
-                    </ComboBox>
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <NumberBox Header="Top (mm)" Width="100"
-                                   Value="{x:Bind TopMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
-                        <NumberBox Header="Right (mm)" Width="100"
-                                   Value="{x:Bind RightMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
-                        <NumberBox Header="Bottom (mm)" Width="100"
-                                   Value="{x:Bind BottomMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
-                        <NumberBox Header="Left (mm)" Width="100"
-                                   Value="{x:Bind LeftMarginMm, Mode=TwoWay}" Minimum="0" Maximum="100" />
-                    </StackPanel>
-                </StackPanel>
-            </StackPanel>
 
-            <TextBlock Text="Changes apply immediately to the preview when you click Apply." Opacity="0.6" TextWrapping="Wrap"/>
-        </StackPanel>
+                    <dev:SettingsExpander.Items>
+                        <dev:SettingsCard Header="Orientation Landscape"
+                                          Description="Select page orientation (portrait or landscape).">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE7B8;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind Landscape, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
+
+                        <dev:SettingsCard Header="Margins"
+                                          Description="Edge spacing in millimeters."
+										  ContentAlignment="Vertical">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE16E;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <Grid ColumnSpacing="16" RowSpacing="10" Margin="0,-40,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <NumberBox Header="Top (mm)"
+                                           Value="{x:Bind TopMarginMm, Mode=TwoWay}"
+                                           Minimum="0" Maximum="100"
+                                           SpinButtonPlacementMode="Compact"
+                                           Width="140"/>
+
+                                <NumberBox Header="Right (mm)"
+                                           Grid.Column="1"
+                                           Value="{x:Bind RightMarginMm, Mode=TwoWay}"
+                                           Minimum="0" Maximum="100"
+                                           SpinButtonPlacementMode="Compact"
+                                           Width="140"/>
+
+                                <NumberBox Header="Bottom (mm)"
+                                           Grid.Row="1"
+                                           Value="{x:Bind BottomMarginMm, Mode=TwoWay}"
+                                           Minimum="0" Maximum="100"
+                                           SpinButtonPlacementMode="Compact"
+                                           Width="140"/>
+
+                                <NumberBox Header="Left (mm)"
+                                           Grid.Row="1" Grid.Column="1"
+                                           Value="{x:Bind LeftMarginMm, Mode=TwoWay}"
+                                           Minimum="0" Maximum="100"
+                                           SpinButtonPlacementMode="Compact"
+                                           Width="140"/>
+                            </Grid>
+                        </dev:SettingsCard>
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
+
+                <!-- ===================== PAGE NUMBERS SECTION ===================== -->
+                <TextBlock Text="Page Numbers"
+                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                           Margin="0,12,0,4"/>
+
+                <dev:SettingsExpander Header="Page Number Settings"
+                                      Description="Configure visibility, placement and starting number."
+                                      IsExpanded="False">
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE12B;"/>
+                    </dev:SettingsExpander.HeaderIcon>
+
+                    <ToggleSwitch IsOn="{x:Bind ShowPageNumbers, Mode=TwoWay}"/>
+
+                    <dev:SettingsExpander.Items>
+                        <dev:SettingsCard Header="Position"
+                                          Description="Choose the corner or center region.">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE80A;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ComboBox SelectedItem="{x:Bind PageNumberPosition, Mode=TwoWay}"
+                                      IsEnabled="{x:Bind ShowPageNumbers, Mode=OneWay}"
+                                      Width="200">
+                                <x:String>TopLeft</x:String>
+                                <x:String>TopCenter</x:String>
+                                <x:String>TopRight</x:String>
+                                <x:String>BottomLeft</x:String>
+                                <x:String>BottomCenter</x:String>
+                                <x:String>BottomRight</x:String>
+                            </ComboBox>
+                        </dev:SettingsCard>
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
+
+                <!-- ===================== RENDERING SECTION ===================== -->
+                <TextBlock Text="Rendering"
+                           Style="{StaticResource BodyStrongTextBlockStyle}"
+                           Margin="0,12,0,4"/>
+
+                <dev:SettingsCard Header="Print Backgrounds"
+                                  Description="Include CSS background colors &amp; images in output.">
+                    <dev:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE91F;"/>
+                    </dev:SettingsCard.HeaderIcon>
+                    <ToggleSwitch IsOn="{x:Bind PrintBackground, Mode=TwoWay}"/>
+                </dev:SettingsCard>
+
+                <!-- ===================== INFO / FOOTER ===================== -->
+                <TextBlock Text="Changes apply when you click Apply."
+                           Opacity="0.6"
+                           TextWrapping="Wrap"
+                           Margin="0,16,0,8"/>
+            </StackPanel>
+        </Grid>
     </ScrollViewer>
 </ContentDialog>
