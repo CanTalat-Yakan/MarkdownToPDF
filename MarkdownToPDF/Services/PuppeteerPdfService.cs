@@ -15,11 +15,21 @@ public sealed class PuppeteerPdfService : IPdfService
         var launchOptions = new LaunchOptions { Headless = true, Args = new[] { "--no-sandbox" } };
         using var browser = await Puppeteer.LaunchAsync(launchOptions);
         using var page = await browser.NewPageAsync();
+
+        // Ensure print media CSS is applied (helps consistent layout)
+        await page.EmulateMediaTypeAsync(PuppeteerSharp.Media.MediaType.Print);
+
         await page.SetContentAsync(html);
 
         var pdfOpts = new PdfOptions
         {
-            Format = opts.PaperFormat switch { "A3" => PaperFormat.A3, "A4" => PaperFormat.A4, "Letter" => PaperFormat.Letter, _ => PaperFormat.A4 },
+            Format = opts.PaperFormat switch
+            {
+                "A3" => PaperFormat.A3,
+                "A4" => PaperFormat.A4,
+                "Letter" => PaperFormat.Letter,
+                _ => PaperFormat.A4
+            },
             Landscape = opts.Landscape,
             PrintBackground = opts.PrintBackground,
             MarginOptions = BuildMargins(opts)
@@ -67,9 +77,14 @@ public sealed class PuppeteerPdfService : IPdfService
             pdfOpts.FooterTemplate = footer;
         }
 
+        // Generate the PDF first
         await page.PdfAsync(opts.OutputPath, pdfOpts);
 
+        // Assign actual page numbers by inspecting the produced PDF
         var headings = _markdownService.GetExtractedHeadings();
+        PdfHeadingPageResolver.AssignPages(opts.OutputPath, (IList<HeadingInfo>)headings);
+
+        // Inject outline with resolved pages
         PdfOutlineWriter.InjectOutline(opts.OutputPath, headings);
     }
 
@@ -86,4 +101,5 @@ public sealed class PuppeteerPdfService : IPdfService
             Left = MmToString(opts.LeftMarginMm)
         };
     }
+
 }

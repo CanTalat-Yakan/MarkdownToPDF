@@ -1,8 +1,6 @@
-﻿using System.Globalization;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
 using Markdig;
-using MarkdownToPDF.Models;
 
 namespace MarkdownToPDF.Services;
 
