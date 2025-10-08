@@ -31,7 +31,7 @@ public sealed class MarkdownService : IMarkdownService
 
         var bodyHtml = Markdown.ToHtml(sb.ToString(), pipeline);
         var html = $@"<!DOCTYPE html>
-<html><head><meta charset='utf-8'>{opts.AdditionalHeadHtml}</head><body>{bodyHtml}</body></html>";
+                    <html><head><meta charset='utf-8'>{opts.AdditionalHeadHtml}</head><body>{bodyHtml}</body></html>";
         return Task.FromResult(html);
     }
 }

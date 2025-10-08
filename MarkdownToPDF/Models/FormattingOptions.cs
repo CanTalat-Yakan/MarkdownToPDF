@@ -8,7 +8,8 @@ public sealed class FormattingOptions
     public bool InsertPageBreaksBetweenFiles { get; set; }
     public string AdditionalHeadHtml { get; set; } = string.Empty;
 
-    // Non-breaking additions to generate consistent base CSS for preview/PDF
     public string BaseFontFamily { get; set; } = "Segoe UI, sans-serif";
     public double BodyMarginPx { get; set; } = 24;
+    public double BodyFontSizePx { get; set; } = 12;
+    public string BodyTextAlignment { get; set; } = "Justify";
 }

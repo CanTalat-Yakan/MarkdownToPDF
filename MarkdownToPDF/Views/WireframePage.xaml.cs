@@ -8,7 +8,9 @@ public sealed partial class WireframePage : Page
 {
     private WireframePageViewModel ViewModel => (WireframePageViewModel)DataContext;
 
-    private const double PageSlotHeight = 1123 + 32;
+    private double PageSlotHeightPortrait => 1123 + 32;
+    private double PageSlotHeightLandscape => 794 + 32;
+    private double CurrentPageSlotHeight => ViewModel.Export.Landscape ? PageSlotHeightLandscape : PageSlotHeightPortrait;
 
     public WireframePage()
     {
@@ -107,7 +109,7 @@ public sealed partial class WireframePage : Page
         var sv = (ScrollViewer)sender;
         var offset = sv.VerticalOffset;
         var centerOffset = offset + sv.ViewportHeight / 2.0;
-        int index = (int)Math.Floor(centerOffset / PageSlotHeight);
+        int index = (int)Math.Floor(centerOffset / CurrentPageSlotHeight);
 
         if (index < 0) index = 0;
         if (index >= ViewModel.PreviewPages.Count) index = ViewModel.PreviewPages.Count - 1;
@@ -139,7 +141,7 @@ public sealed partial class WireframePage : Page
         if (index < 0) index = 0;
         if (index >= ViewModel.TotalPages) index = ViewModel.TotalPages - 1;
 
-        var targetOffset = index * PageSlotHeight;
+        var targetOffset = index * CurrentPageSlotHeight;
         PreviewScrollViewer.ChangeView(null, targetOffset, null, false);
         PageInputBox.Text = (index + 1).ToString();
     }

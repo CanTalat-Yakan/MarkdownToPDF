@@ -54,7 +54,6 @@
                                        Width="140"/>
                         </dev:SettingsCard>
 
-                        <!-- New: Font Family selection -->
                         <dev:SettingsCard Header="Font Family"
                                           Description="Primary typeface used for body text in output.">
                             <dev:SettingsCard.HeaderIcon>
@@ -70,6 +69,31 @@
                                            Opacity="0.65"
                                            Text="Full list pulled from installed system fonts."/>
                             </StackPanel>
+                        </dev:SettingsCard>
+
+                        <dev:SettingsCard Header="Base Font Size"
+                                          Description="Root body text size (pixels).">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE1CA;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <NumberBox Value="{x:Bind BodyFontSizePx, Mode=TwoWay}"
+                                       Minimum="8" Maximum="48"
+                                       SpinButtonPlacementMode="Compact"
+                                       Width="140"/>
+                        </dev:SettingsCard>
+
+                        <dev:SettingsCard Header="Paragraph Alignment"
+                                          Description="Alignment for normal paragraph and list text.">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE8E4;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ComboBox SelectedItem="{x:Bind BodyTextAlignment, Mode=TwoWay}"
+                                      Width="160">
+                                <x:String>Justify</x:String>
+                                <x:String>Left</x:String>
+                                <x:String>Center</x:String>
+                                <x:String>Right</x:String>
+                            </ComboBox>
                         </dev:SettingsCard>
 
                         <dev:SettingsCard Header="Page Breaks Between Files"

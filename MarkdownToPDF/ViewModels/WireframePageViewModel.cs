@@ -32,9 +32,7 @@ public sealed class WireframePageViewModel : ObservableObject
             if (PreviewPages.Count > 0 && clamped > PreviewPages.Count) clamped = PreviewPages.Count;
             if (PreviewPages.Count == 0) clamped = 0;
             if (SetProperty(ref _currentPage, clamped))
-            {
                 OnPropertyChanged(nameof(PageIndicator));
-            }
         }
     }
 
@@ -47,8 +45,10 @@ public sealed class WireframePageViewModel : ObservableObject
         UsePipeTables = true,
         UseAutoLinks = true,
         BodyMarginPx = 0,
+        BodyFontSizePx = 12,
         BaseFontFamily = "Segoe UI, sans-serif",
-        InsertPageBreaksBetweenFiles = true
+        InsertPageBreaksBetweenFiles = true,
+        BodyTextAlignment = "Justify"
     };
 
     public ExportOptions Export { get; } = new()
@@ -65,6 +65,10 @@ public sealed class WireframePageViewModel : ObservableObject
         PreviewDestinationWidthPx = 794,
         PreviewDpi = 96,
     };
+
+    // Dynamic preview page dimensions based on selected paper format + orientation + preview DPI.
+    public int PagePreviewWidthPx => ComputePagePixelSize().widthPx;
+    public int PagePreviewHeightPx => ComputePagePixelSize().heightPx;
 
     public WireframePageViewModel(IMarkdownService mdService, IPdfService pdfService)
     {
@@ -99,13 +103,22 @@ public sealed class WireframePageViewModel : ObservableObject
 
     public async Task ApplySettingsAsync(FormattingOptions newFormatting, ExportOptions newExport, CancellationToken ct = default)
     {
+        var layoutChanged =
+            Export.Landscape != newExport.Landscape ||
+            !string.Equals(Export.PaperFormat, newExport.PaperFormat, StringComparison.OrdinalIgnoreCase) ||
+            Export.PreviewDpi != newExport.PreviewDpi;
+
+        // Formatting
         Formatting.UseAdvancedExtensions = newFormatting.UseAdvancedExtensions;
         Formatting.UsePipeTables = newFormatting.UsePipeTables;
         Formatting.UseAutoLinks = newFormatting.UseAutoLinks;
         Formatting.InsertPageBreaksBetweenFiles = newFormatting.InsertPageBreaksBetweenFiles;
         Formatting.BaseFontFamily = newFormatting.BaseFontFamily;
         Formatting.BodyMarginPx = newFormatting.BodyMarginPx;
+        Formatting.BodyFontSizePx = newFormatting.BodyFontSizePx;
+        Formatting.BodyTextAlignment = newFormatting.BodyTextAlignment;
 
+        // Export
         Export.PaperFormat = newExport.PaperFormat;
         Export.Landscape = newExport.Landscape;
         Export.PrintBackground = newExport.PrintBackground;
@@ -115,8 +128,49 @@ public sealed class WireframePageViewModel : ObservableObject
         Export.LeftMarginMm = newExport.LeftMarginMm;
         Export.ShowPageNumbers = newExport.ShowPageNumbers;
         Export.PageNumberPosition = newExport.PageNumberPosition;
+        Export.PreviewDpi = newExport.PreviewDpi;
+
+        if (layoutChanged)
+        {
+            // Recalculate preview width used for PDF page rendering -> affects clarity of preview images.
+            Export.PreviewDestinationWidthPx = PagePreviewWidthPx;
+            OnPropertyChanged(nameof(PagePreviewWidthPx));
+            OnPropertyChanged(nameof(PagePreviewHeightPx));
+        }
 
         await RebuildPreviewAsync(ct);
+    }
+
+    private (int widthPx, int heightPx) ComputePagePixelSize()
+    {
+        // Sizes in millimeters for supported formats (portrait orientation baseline)
+        // A4: 210 x 297 mm, A3: 297 x 420 mm, Letter: 215.9 x 279.4 mm
+        var (wMm, hMm) = GetPaperSizeMm(Export.PaperFormat);
+        if (Export.Landscape)
+            (wMm, hMm) = (hMm, wMm);
+
+        double dpi = Export.PreviewDpi <= 0 ? 96 : Export.PreviewDpi;
+
+        // Convert mm -> inches then -> pixels
+        double wPx = (wMm / 25.4d) * dpi;
+        double hPx = (hMm / 25.4d) * dpi;
+
+        return (widthPx: (int)Math.Round(wPx, MidpointRounding.AwayFromZero),
+                heightPx: (int)Math.Round(hPx, MidpointRounding.AwayFromZero));
+    }
+
+    private static (double wMm, double hMm) GetPaperSizeMm(string? format)
+    {
+        if (string.IsNullOrWhiteSpace(format))
+            return (210, 297); // default A4
+
+        switch (format.Trim().ToUpperInvariant())
+        {
+            case "A3": return (297, 420);
+            case "LETTER": return (215.9, 279.4); // 8.5 x 11 in
+            case "A4":
+            default: return (210, 297);
+        }
     }
 
     private async Task RebuildPreviewAsync(CancellationToken ct)
@@ -182,13 +236,20 @@ public sealed class WireframePageViewModel : ObservableObject
 
     private void ApplyBaseHeadCss()
     {
+        var align = (Formatting.BodyTextAlignment ?? "Justify").Trim();
+        string paragraphRule = align.ToLowerInvariant() switch
+        {
+            "left" => "p, li { text-align: left; }",
+            "center" => "p, li { text-align: center; }",
+            "right" => "p, li { text-align: right; }",
+            _ => "p, li { text-align: justify; text-justify: inter-word; hyphens: auto; }"
+        };
+
         Formatting.AdditionalHeadHtml = $@"
             <style>
                 :root {{ --mtpdf-border-color: #d0d7de; }}
-                body {{ font-family:{Formatting.BaseFontFamily}; font-size:12px; margin:{Formatting.BodyMarginPx}px; }}
-                /* Full line fill (justified text) */
-                p, li {{ text-align: justify; text-justify: inter-word; hyphens: auto; }}
-                /* Optional: avoid giant spaces in headings/code */
+                body {{ font-family:{Formatting.BaseFontFamily}; font-size:{Formatting.BodyFontSizePx}px; margin:{Formatting.BodyMarginPx}px; }}
+                {paragraphRule}
                 h1, h2, h3, h4, h5, h6, pre, code {{ text-align: left; }}
                 img {{ max-width:100%; }}
                 pre {{ overflow:auto; }}
@@ -216,7 +277,7 @@ public sealed class WireframePageViewModel : ObservableObject
             RightMarginMm = Export.RightMarginMm,
             BottomMarginMm = Export.BottomMarginMm,
             LeftMarginMm = Export.LeftMarginMm,
-            PreviewDestinationWidthPx = Export.PreviewDestinationWidthPx,
+            PreviewDestinationWidthPx = PagePreviewWidthPx,
             PreviewDpi = Export.PreviewDpi,
         };
     }
