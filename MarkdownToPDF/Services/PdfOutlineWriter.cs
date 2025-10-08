@@ -11,18 +11,30 @@ public static class PdfOutlineWriter
 
         using var document = PdfReader.Open(pdfPath, PdfDocumentOpenMode.Modify);
 
-        List<PdfOutline> parent = new();
-        for (int i = 0; i < 10; i++)
-            parent.Add(null);
+        var parent = new PdfOutline[16]; // allow deeper nesting safely
 
         foreach (var h in headings)
         {
-            PdfOutline outline = null;
+            // Skip unresolved or invalid page references
+            if (h.Page <= 0) continue;              // 0 means not resolved
+            int pageIndex = h.Page - 1;             // convert 1-based to 0-based
+            if (pageIndex < 0 || pageIndex >= document.Pages.Count)
+                continue;
 
+            var targetPage = document.Pages[pageIndex];
+
+            PdfOutline outline;
             if (h.Level == 1)
-                outline = document.Outlines.Add(h.Text, document.Pages[h.Page], true);
-            if (h.Level > 1)
-                outline = parent[h.Level - 1].Outlines.Add(h.Text, document.Pages[h.Page], true);
+            {
+                outline = document.Outlines.Add(h.Text, targetPage, true);
+            }
+            else
+            {
+                var parentNode = parent[h.Level - 1];
+                outline = parentNode == null
+                    ? document.Outlines.Add(h.Text, targetPage, true)
+                    : parentNode.Outlines.Add(h.Text, targetPage, true);
+            }
 
             parent[h.Level] = outline;
         }

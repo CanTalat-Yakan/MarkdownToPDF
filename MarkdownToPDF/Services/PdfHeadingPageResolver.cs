@@ -5,76 +5,93 @@ namespace MarkdownToPDF.Services;
 
 public static class PdfHeadingPageResolver
 {
-    // Assigns Page for each heading (0-based) by scanning PDF text.
     public static void AssignPages(string pdfPath, IList<HeadingInfo> headings)
     {
         if (headings.Count == 0) return;
 
         using var doc = PdfDocument.Open(pdfPath);
 
-        // Pending headings not yet mapped
+        // Work only with unresolved headings
         var pending = headings.Where(h => h.Page == 0).ToList();
+        if (pending.Count == 0) return;
 
-        // Track how many times we've matched a normalized heading (for duplicates)
-        var occurrenceCursor = new Dictionary<string, int>();
-        foreach (var h in pending)
+        // Group headings by normalized text; we will assign from the end of each group
+        var groups = pending
+            .GroupBy(h => Normalize(h.Text))
+            .ToDictionary(
+                g => g.Key,
+                g => new HeadingGroup
+                {
+                    Headings = g.ToList(),
+                    NextUnassignedReverseIndex = g.Count() - 1
+                });
+
+        // Scan pages from last to first
+        for (int pageIdx = doc.NumberOfPages; pageIdx >= 1 && groups.Count > 0; pageIdx--)
         {
-            var key = Normalize(h.Text);
-            if (!occurrenceCursor.ContainsKey(key))
-                occurrenceCursor[key] = 0;
-        }
+            var page = doc.GetPage(pageIdx);
+            var pageTextNorm = Normalize(page.Text);
 
-        for (int pageIdx = 0; pageIdx < doc.NumberOfPages && pending.Count > 0; pageIdx++)
-        {
-            var page = doc.GetPage(pageIdx + 1); // PdfPig pages are 1-based
-            var pageText = Normalize(page.Text);
-
-            // Copy to avoid modifying while iterating
-            foreach (var h in pending.ToList())
+            // Iterate over a snapshot of keys to allow removal inside loop
+            foreach (var kvpKey in groups.Keys.ToList())
             {
-                string key = Normalize(h.Text);
-                int occurrenceNeeded = occurrenceCursor[key];
+                var group = groups[kvpKey];
+                if (group.NextUnassignedReverseIndex < 0)
+                {
+                    groups.Remove(kvpKey);
+                    continue;
+                }
 
-                int foundAt = FindNthOccurrence(pageText, key, occurrenceNeeded);
-                if (foundAt >= 0)
+                // Count occurrences of the full normalized key on this page
+                int occurrenceCount = CountOccurrences(pageTextNorm, kvpKey);
+
+                // If no full match and key is very long, try a relaxed prefix
+                if (occurrenceCount == 0 && kvpKey.Length > 60)
                 {
-                    h.Page = pageIdx; // keep 0-based
-                    occurrenceCursor[key] = occurrenceNeeded + 1;
-                    pending.Remove(h);
+                    string relaxed = kvpKey[..50];
+                    occurrenceCount = CountOccurrences(pageTextNorm, relaxed);
                 }
-                else
+
+                if (occurrenceCount <= 0) continue;
+
+                // Assign as many headings (from the tail of the list) as we have occurrences.
+                // Each occurrence corresponds to a body usage when scanning backwards.
+                while (occurrenceCount > 0 && group.NextUnassignedReverseIndex >= 0)
                 {
-                    // Try a relaxed match (first 50 chars) for very long headings that wrap oddly
-                    var relaxed = key.Length > 60 ? key[..50] : null;
-                    if (!string.IsNullOrEmpty(relaxed))
-                    {
-                        int relaxedFound = FindNthOccurrence(pageText, relaxed, occurrenceNeeded);
-                        if (relaxedFound >= 0)
-                        {
-                            h.Page = pageIdx;
-                            occurrenceCursor[key] = occurrenceNeeded + 1;
-                            pending.Remove(h);
-                        }
-                    }
+                    var h = group.Headings[group.NextUnassignedReverseIndex];
+                    if (h.Page == 0)
+                        h.Page = pageIdx;
+                    group.NextUnassignedReverseIndex--;
+                    occurrenceCount--;
                 }
+
+                if (group.NextUnassignedReverseIndex < 0)
+                    groups.Remove(kvpKey);
             }
         }
+    }
+
+    private sealed class HeadingGroup
+    {
+        public List<HeadingInfo> Headings { get; set; } = default!;
+        public int NextUnassignedReverseIndex { get; set; }
     }
 
     private static string Normalize(string s) =>
         Regex.Replace(s.ToLowerInvariant(), @"\s+", " ").Trim();
 
-    private static int FindNthOccurrence(string haystack, string needle, int n)
+    private static int CountOccurrences(string haystack, string needle)
     {
-        if (n < 0) return -1;
-        int idx = -1;
+        if (string.IsNullOrEmpty(needle)) return 0;
+        int count = 0;
         int start = 0;
-        for (int i = 0; i <= n; i++)
+        while (true)
         {
-            idx = haystack.IndexOf(needle, start, StringComparison.Ordinal);
-            if (idx < 0) return -1;
+            int idx = haystack.IndexOf(needle, start, StringComparison.Ordinal);
+            if (idx < 0) break;
+            count++;
             start = idx + needle.Length;
         }
-        return idx;
+        return count;
     }
 }
