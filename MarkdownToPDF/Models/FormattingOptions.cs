@@ -20,5 +20,5 @@ public sealed class FormattingOptions
     public bool IndentTableOfContents { get; set; } = true;
     public string TableOfContentsBulletStyle { get; set; } = "-";
     public string TableOfContentsHeaderText { get; set; } = "Table of Contents";
-    public bool TableOfContentsAfterFirstFile { get; set; } = true;
+    public bool TableOfContentsAfterFirstFile { get; set; } = false;
 }

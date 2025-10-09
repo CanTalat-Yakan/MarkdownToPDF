@@ -314,14 +314,14 @@
                             </ComboBox>
                         </dev:SettingsCard>
 
-                        <!--<dev:SettingsCard Header="Show On First Page"
+                        <dev:SettingsCard Header="Show On First Page"
 									  Description="Include the page number on the first page.">
                             <dev:SettingsCard.HeaderIcon>
                                 <FontIcon Glyph="&#xE12B;"/>
                             </dev:SettingsCard.HeaderIcon>
                             <ToggleSwitch IsOn="{x:Bind ShowPageNumberOnFirstPage, Mode=TwoWay}"
 									  IsEnabled="{x:Bind ShowPageNumbers, Mode=OneWay}"/>
-                        </dev:SettingsCard>-->
+                        </dev:SettingsCard>
                     </dev:SettingsExpander.Items>
                 </dev:SettingsExpander>
 

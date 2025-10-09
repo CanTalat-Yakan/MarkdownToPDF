@@ -56,8 +56,6 @@ public sealed class PuppeteerPdfService : IPdfService
             string verticalLift = "4mm";
 
             string numberContent = "<span class=\"pageNumber\"></span>";
-            if (!opts.ShowPageNumberOnFirstPage)
-                numberContent = "<span/>";
 
             string block = $"""
                 <div style='
@@ -86,6 +84,10 @@ public sealed class PuppeteerPdfService : IPdfService
 
         // Inject outline with resolved pages
         PdfOutlineWriter.InjectOutline(opts.OutputPath, headings);
+
+        // Finally, replace the first page's footer
+        if (!opts.ShowPageNumberOnFirstPage)
+            PdfFirstPageFooterRewriter.ClearFooterOnFirstPage(opts.OutputPath, opts.BottomMarginMm);
     }
 
     private static MarginOptions BuildMargins(ExportOptions opts)
