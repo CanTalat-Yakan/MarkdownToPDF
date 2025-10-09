@@ -1,11 +1,15 @@
 using System.Collections.ObjectModel;
 using System.Drawing.Text;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 
 namespace MarkdownToPDF.Views;
 
 public sealed partial class SettingsDialog : ContentDialog
 {
     private readonly WireframePageViewModel _viewModel;
+    private FrameworkElement? _rootForPointerHandler;
 
     public string BaseFontFamily { get; set; } = "Segoe UI";
     public ObservableCollection<string> FontFamilies { get; } = new();
@@ -32,13 +36,23 @@ public sealed partial class SettingsDialog : ContentDialog
 
     public bool ShowPageNumberOnFirstPage { get; set; } = true;
 
-    public string PageNumberPosition { get; set; } = "BottomRight";
+    // Display label used by ComboBox (e.g. "Bottom Right")
+    public string PageNumberPosition { get; set; } = "Bottom Right";
     public double TopMarginMm { get; set; }
     public double RightMarginMm { get; set; }
     public double BottomMarginMm { get; set; }
     public double LeftMarginMm { get; set; }
 
     public string HeaderNumberingPattern { get; set; } = "1.1.1";
+
+    // New dependency property for header numbering toggle
+    public bool AddHeaderNumbering
+    {
+        get => (bool)GetValue(AddHeaderNumberingProperty);
+        set => SetValue(AddHeaderNumberingProperty, value);
+    }
+    public static readonly DependencyProperty AddHeaderNumberingProperty =
+        DependencyProperty.Register(nameof(AddHeaderNumbering), typeof(bool), typeof(SettingsDialog), new PropertyMetadata(false));
 
     public bool AddTableOfContents
     {
@@ -77,7 +91,8 @@ public sealed partial class SettingsDialog : ContentDialog
         Landscape = exportOptions.Landscape;
         PrintBackground = exportOptions.PrintBackground;
         ShowPageNumbers = exportOptions.ShowPageNumbers;
-        PageNumberPosition = exportOptions.PageNumberPosition;
+        // Convert stored key (no spaces) to display label with spaces
+        PageNumberPosition = StoredToDisplayPosition(exportOptions.PageNumberPosition);
         ShowPageNumberOnFirstPage = exportOptions.ShowPageNumberOnFirstPage;
         TopMarginMm = exportOptions.TopMarginMm;
         RightMarginMm = exportOptions.RightMarginMm;
@@ -85,6 +100,7 @@ public sealed partial class SettingsDialog : ContentDialog
         LeftMarginMm = exportOptions.LeftMarginMm;
 
         HeaderNumberingPattern = formattingOptions.HeaderNumberingPattern;
+        AddHeaderNumbering = formattingOptions.AddHeaderNumbering;
         AddTableOfContents = formattingOptions.AddTableOfContents;
         IndentTableOfContents = formattingOptions.IndentTableOfContents;
         TableOfContentsBulletStyle = formattingOptions.TableOfContentsBulletStyle;
@@ -93,6 +109,67 @@ public sealed partial class SettingsDialog : ContentDialog
 
         DataContext = this;
         LoadFonts();
+
+        // Attach handlers to enable closing the dialog when clicking outside
+        Opened += SettingsDialog_Opened;
+        Closed += SettingsDialog_Closed;
+    }
+
+    private static string StoredToDisplayPosition(string stored)
+    {
+        if (string.IsNullOrWhiteSpace(stored)) return "Bottom Right";
+        return stored switch
+        {
+            "TopLeft" => "Top Left",
+            "TopCenter" => "Top Center",
+            "TopRight" => "Top Right",
+            "BottomLeft" => "Bottom Left",
+            "BottomCenter" => "Bottom Center",
+            "BottomRight" => "Bottom Right",
+            _ => stored
+        };
+    }
+
+    private static string DisplayToStoredPosition(string display)
+    {
+        if (string.IsNullOrWhiteSpace(display)) return "BottomRight";
+        return display.Replace(" ", "");
+    }
+
+    private void SettingsDialog_Opened(ContentDialog sender, ContentDialogOpenedEventArgs args)
+    {
+        // Attach a PointerPressed handler to the page root so we can detect clicks outside
+        if (XamlRoot?.Content is FrameworkElement root)
+        {
+            _rootForPointerHandler = root;
+            _rootForPointerHandler.PointerPressed += Root_PointerPressed;
+        }
+    }
+
+    private void SettingsDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        // Clean up handler
+        if (_rootForPointerHandler is not null)
+        {
+            _rootForPointerHandler.PointerPressed -= Root_PointerPressed;
+            _rootForPointerHandler = null;
+        }
+    }
+
+    private void Root_PointerPressed(object? sender, PointerRoutedEventArgs e)
+    {
+        // If the pointer press originated outside this dialog's visual tree, hide the dialog
+        var original = e.OriginalSource as DependencyObject;
+        var current = original;
+        while (current is not null)
+        {
+            if (current == this)
+                return; // click happened inside the dialog, ignore
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        // Click was outside the dialog; close it (light dismiss)
+        Hide();
     }
 
     private void LoadFonts()
@@ -145,9 +222,6 @@ public sealed partial class SettingsDialog : ContentDialog
     {
         var root = XamlRoot;
 
-        var trimmedPattern = HeaderNumberingPattern?.Trim() ?? string.Empty;
-        bool enableNumbering = !string.IsNullOrWhiteSpace(trimmedPattern);
-
         var newFormatting = new FormattingOptions
         {
             UseAdvancedExtensions = UseAdvancedExtensions,
@@ -158,8 +232,8 @@ public sealed partial class SettingsDialog : ContentDialog
             BodyMarginPx = BodyMarginPx,
             BodyFontSizePx = BodyFontSizePx,
             BodyTextAlignment = BodyTextAlignment,
-            AddHeaderNumbering = enableNumbering,
-            HeaderNumberingPattern = enableNumbering ? trimmedPattern : string.Empty,
+            AddHeaderNumbering = AddHeaderNumbering,
+            HeaderNumberingPattern = HeaderNumberingPattern,
             AddTableOfContents = AddTableOfContents,
             IndentTableOfContents = IndentTableOfContents,
             TableOfContentsBulletStyle = TableOfContentsBulletStyle,
@@ -173,7 +247,8 @@ public sealed partial class SettingsDialog : ContentDialog
             Landscape = Landscape,
             PrintBackground = PrintBackground,
             ShowPageNumbers = ShowPageNumbers,
-            PageNumberPosition = PageNumberPosition,
+            // Convert display label back to stored key
+            PageNumberPosition = DisplayToStoredPosition(PageNumberPosition),
             ShowPageNumberOnFirstPage = ShowPageNumberOnFirstPage,
             TopMarginMm = TopMarginMm,
             RightMarginMm = RightMarginMm,

@@ -10,17 +10,9 @@
       "IsExpanded": false,
       "Items": [
         {
-          "UniqueId": "MarkdownToPDF.Views.HomeLandingPage",
+          "UniqueId": "MarkdownToPDF.Views.WireframePage",
           "Title": "MarkdownToPDF",
           "Subtitle": "MarkdownToPDF",
-          "ImagePath": "ms-appx:///Assets/AppIcon.png",
-          "HideItem": true
-        },
-        {
-          "UniqueId": "MarkdownToPDF.Views.WireframePage",
-          "Title": "Wireframe",
-          "Subtitle": "Wireframe",
-          "ImagePath": "ms-appx:///Assets/AppIcon.png",
           "HideItem": false
         }
       ]

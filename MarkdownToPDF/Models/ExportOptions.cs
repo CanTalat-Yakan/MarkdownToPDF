@@ -7,7 +7,7 @@ public sealed class ExportOptions
     public bool PrintBackground { get; set; } = true;
     public string PaperFormat { get; set; } = "A4";
 
-    public bool ShowPageNumbers { get; set; } = true;
+    public bool ShowPageNumbers { get; set; } = false;
     public string PageNumberPosition { get; set; } = "BottomRight";
     public bool ShowPageNumberOnFirstPage { get; set; } = true;
 

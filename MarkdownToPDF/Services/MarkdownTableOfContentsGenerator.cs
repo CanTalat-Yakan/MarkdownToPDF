@@ -24,9 +24,11 @@ internal sealed class MarkdownTableOfContentsGenerator
         {
             if (h.MarkdownLevel == 1) continue;
             int indentLevel = h.LogicalLevel <= 1 ? 0 : h.LogicalLevel - 1;
-            string indent = opts.IndentTableOfContents
-                ? new string(' ', indentLevel * 2)
-                : string.Empty;
+
+            string indent = string.Empty;
+            if (opts.IndentTableOfContents)
+                indent = numbered ? new string(' ', indentLevel * 4) : new string(' ', indentLevel * 2);
+
             string labelCore = string.IsNullOrEmpty(h.Numbering) ? h.Text : $"{h.Numbering} {h.Text}";
             string bullet = numbered ? "1." : "-";
             sb.AppendLine($"{indent}{bullet} [{labelCore}](#{h.Anchor})");

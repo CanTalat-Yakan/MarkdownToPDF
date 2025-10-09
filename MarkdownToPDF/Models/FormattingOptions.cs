@@ -13,12 +13,12 @@ public sealed class FormattingOptions
     public double BodyFontSizePx { get; set; } = 12;
     public string BodyTextAlignment { get; set; } = "Justify";
 
-    public bool AddHeaderNumbering { get; set; } = true;
+    public bool AddHeaderNumbering { get; set; } = false;
     public string HeaderNumberingPattern { get; set; } = "1.1.1.";
 
     public bool AddTableOfContents { get; set; } = false;
     public bool IndentTableOfContents { get; set; } = true;
     public string TableOfContentsBulletStyle { get; set; } = "-";
     public string TableOfContentsHeaderText { get; set; } = "Table of Contents";
-    public bool TableOfContentsAfterFirstFile { get; set; } = false;
+    public bool TableOfContentsAfterFirstFile { get; set; } = true;
 }

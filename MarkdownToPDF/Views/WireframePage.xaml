@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="using:MarkdownToPDF.Models"
     mc:Ignorable="d">
 
     <Page.Resources>
@@ -25,14 +26,27 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <Grid Grid.Row="0" Background="#2B2B2B">
+        <Grid Grid.Row="0" Background="{ThemeResource LayerFillColorDefaultBrush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left: page input -->
+            <!-- Left: hierarchy toggle -->
+            <StackPanel Grid.Column="0"
+                        Orientation="Horizontal"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left">
+                <Button x:Name="HierarchyButton"
+                        ToolTipService.ToolTip="Headings"
+                        Click="HierarchyButton_Click"
+                        Margin="8,0,8,0">
+                    <SymbolIcon Symbol="Bookmarks"/>
+                </Button>
+            </StackPanel>
+
+            <!-- Center: page input -->
             <StackPanel Grid.Column="1"
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"
@@ -44,18 +58,13 @@
                          Text="{Binding CurrentPage, Mode=OneWay}"
                          HorizontalContentAlignment="Center"
                          VerticalContentAlignment="Center"
-                         BorderBrush="#444"
-                         Background="#1E1E1E"
-                         Foreground="White"
                          KeyDown="PageInputBox_KeyDown"
                          InputScope="Number"/>
                 <TextBlock Text="of"
                            VerticalAlignment="Center"
-                           Foreground="White"
                            Opacity="0.8"/>
                 <TextBlock Text="{Binding TotalPages}"
                            VerticalAlignment="Center"
-                           Foreground="White"
                            FontWeight="SemiBold"/>
             </StackPanel>
 
@@ -66,58 +75,127 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Right"
                         Margin="0,0,8,0">
+                <Button x:Name="ClearFilesButton"
+                        ToolTipService.ToolTip="Clear current files and add new"
+                        Click="ClearFiles_Click"
+                        Margin="0,0,4,0">
+                    <SymbolIcon Symbol="Delete"/>
+                </Button>
+
                 <Button x:Name="SettingsButton"
                         ToolTipService.ToolTip="Settings"
                         Click="Settings_Click">
-                    <SymbolIcon Symbol="Setting" Foreground="White"/>
+                    <SymbolIcon Symbol="Setting"/>
                 </Button>
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1">
-            <ScrollViewer x:Name="PreviewScrollViewer"
-                          ViewChanged="PreviewScrollViewer_ViewChanged"
-                          HorizontalScrollBarVisibility="Disabled"
-                          VerticalScrollBarVisibility="Auto">
-                <ItemsControl x:Name="PagesItemsControl"
-                              ItemsSource="{Binding PreviewPages}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical"
-                                        HorizontalAlignment="Center"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource A4PageCard}"
-                                    Width="{Binding DataContext.PagePreviewWidthPx, ElementName=PagesItemsControl}"
-                                    Height="{Binding DataContext.PagePreviewHeightPx, ElementName=PagesItemsControl}">
-                                <Image Source="{Binding}" Stretch="UniformToFill"/>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+        <!-- Content with left hierarchy pane -->
+        <SplitView x:Name="HierarchySplitView"
+                   Grid.Row="1"
+                   DisplayMode="Overlay"
+                   OpenPaneLength="350"
+                   CompactPaneLength="0"
+                   IsPaneOpen="False"
+                   PanePlacement="Left">
+            <SplitView.Pane>
+                <Grid Background="{ThemeResource ControlFillColorSecondaryBrush}">
+                    <TreeView x:Name="HierarchyTree"
+                              ItemInvoked="HierarchyTree_ItemInvoked">
+                        <TreeView.ItemContainerStyle>
+                            <Style TargetType="TreeViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </TreeView.ItemContainerStyle>
+                        <TreeView.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Content.Text}"
+                                           TextWrapping="Wrap"
+                                           TextTrimming="None"
+                                           VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </TreeView.ItemTemplate>
+                    </TreeView>
+                </Grid>
+            </SplitView.Pane>
 
-            <TextBlock x:Name="ContentTextBlock"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       FontSize="18"
-                       TextWrapping="Wrap"
-                       TextAlignment="Center"/>
+            <SplitView.Content>
+                <Grid>
+                    <ScrollViewer x:Name="PreviewScrollViewer"
+                                  ViewChanged="PreviewScrollViewer_ViewChanged"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="PagesItemsControl"
+                                      ItemsSource="{Binding PreviewPages}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Vertical"
+                                                HorizontalAlignment="Center"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource A4PageCard}"
+                                            Width="{Binding DataContext.PagePreviewWidthPx, ElementName=PagesItemsControl}"
+                                            Height="{Binding DataContext.PagePreviewHeightPx, ElementName=PagesItemsControl}">
+                                        <Image Source="{Binding}" Stretch="UniformToFill"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
 
-            <Button x:Name="ExportButton"
-                    Click="ExportPdf_Click"
-                    ToolTipService.ToolTip="Save / Export PDF"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Margin="0,0,20,20"
-                    Style="{StaticResource AccentButtonStyle}">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <SymbolIcon Symbol="Save"/>
-                    <TextBlock Text="Save PDF"/>
-                </StackPanel>
-            </Button>
-        </Grid>
+                    <TextBlock x:Name="ContentTextBlock"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontSize="18"
+                               TextWrapping="Wrap"
+                               TextAlignment="Center"/>
+
+                    <Button x:Name="AddFilesInitialButton"
+                            Click="AddFilesInitialButton_Click"
+                            ToolTipService.ToolTip="Add files"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,20,20"
+                            Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="Add"/>
+                            <TextBlock Text="Add Files"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="ExportButton"
+                            Click="ExportPdf_Click"
+                            ToolTipService.ToolTip="Save / Export PDF"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,20,20"
+                            Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <SymbolIcon Symbol="Save"/>
+                            <TextBlock Text="Save PDF"/>
+                        </StackPanel>
+                    </Button>
+
+                    <!-- Scroll to top button - appears when scrolled down -->
+                    <Button x:Name="ScrollToTopButton"
+                            Click="ScrollToTopButton_Click"
+                            Visibility="Collapsed"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,0,20"
+                            Padding="0"
+                            Width="32"
+                            Height="32"
+                            CornerRadius="16"
+                            Style="{StaticResource AccentButtonStyle}" 
+                            Foreground="#c0000000"
+                            Background="#c0f5f5f5">
+                        <FontIcon Glyph="&#xE70E;" />
+                    </Button>
+                </Grid>
+            </SplitView.Content>
+        </SplitView>
     </Grid>
 </Page>

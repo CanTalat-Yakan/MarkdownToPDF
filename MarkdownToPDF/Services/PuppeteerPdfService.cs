@@ -44,11 +44,11 @@ public sealed class PuppeteerPdfService : IPdfService
 
             (bool top, string align) = opts.PageNumberPosition switch
             {
-                "TopLeft" => (true, "left"),
-                "TopCenter" => (true, "center"),
-                "TopRight" => (true, "right"),
-                "BottomLeft" => (false, "left"),
-                "BottomCenter" => (false, "center"),
+                "Top Left" => (true, "left"),
+                "Top Center" => (true, "center"),
+                "Top Right" => (true, "right"),
+                "Bottom Left" => (false, "left"),
+                "Bottom Center" => (false, "center"),
                 _ => (false, "right")
             };
 

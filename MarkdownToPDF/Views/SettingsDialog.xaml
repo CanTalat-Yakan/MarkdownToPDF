@@ -8,339 +8,336 @@
     xmlns:dev="using:DevWinUI"
     mc:Ignorable="d"
     Title="PDF / Markdown Settings"
+    Style="{StaticResource DefaultContentDialogStyle}"
     PrimaryButtonText="Apply"
     CloseButtonText="Discard"
     DefaultButton="Primary"
-    PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
-    FullSizeDesired="True"
-    HorizontalAlignment="Center">
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
 
-	<ContentDialog.Resources>
-		<x:Double x:Key="ContentDialogMaxWidth">1200</x:Double>
-		<x:Double x:Key="ContentDialogMinWidth">900</x:Double>
-	</ContentDialog.Resources>
+    <ContentDialog.Resources>
+        <x:Double x:Key="ContentDialogMinWidth">600</x:Double>
+        <x:Double x:Key="ContentDialogMinHeight">800</x:Double>
+    </ContentDialog.Resources>
 
-	<ScrollViewer VerticalScrollBarVisibility="Auto"
+    <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
-		<Grid Margin="0"
+        <Grid Margin="0"
               RowSpacing="16">
-			<Grid.RowDefinitions>
-				<RowDefinition Height="Auto"/>
-			</Grid.RowDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-			<StackPanel Spacing="8" Padding="24" HorizontalAlignment="Stretch">
+            <StackPanel Spacing="8" Padding="0,0,12,0" HorizontalAlignment="Stretch">
 
-				<!-- ===================== MARKDOWN / FORMATTING SECTION ===================== -->
-				<TextBlock Text="Markdown"
+                <!-- ===================== MARKDOWN / FORMATTING SECTION ===================== -->
+                <TextBlock Text="Markdown"
                            Style="{StaticResource BodyStrongTextBlockStyle}"
                            Margin="0,0,0,4"/>
 
-				<dev:SettingsExpander Header="Formatting &amp; Features"
+                <dev:SettingsExpander Header="Formatting &amp; Features"
                                       Description="Typography and Markdown extension options"
-                                      IsExpanded="True">
-					<dev:SettingsExpander.HeaderIcon>
-						<FontIcon Glyph="&#xE8D2;"/>
-					</dev:SettingsExpander.HeaderIcon>
-					<dev:SettingsExpander.Items>
+                                      IsExpanded="False">
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE8D2;"/>
+                    </dev:SettingsExpander.HeaderIcon>
+                    <dev:SettingsExpander.Items>
 
-						<dev:SettingsCard Header="Body Margin"
+                        <dev:SettingsCard Header="Body Margin"
                                           Description="Padding inside page content (pixels).">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE739;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<NumberBox Value="{x:Bind BodyMarginPx, Mode=TwoWay}"
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE739;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <NumberBox Value="{x:Bind BodyMarginPx, Mode=TwoWay}"
                                        Minimum="0" Maximum="200"
                                        SpinButtonPlacementMode="Compact"
                                        Width="140"/>
-						</dev:SettingsCard>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Font Family"
+                        <dev:SettingsCard Header="Font Family"
                                           Description="Primary typeface used for body text in output.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE8D2;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<StackPanel Orientation="Vertical" Spacing="4">
-								<ComboBox
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE8D2;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <StackPanel Orientation="Vertical" Spacing="4">
+                                <ComboBox
                                     Width="260"
                                     ItemsSource="{x:Bind FontFamilies}"
                                     SelectedItem="{x:Bind BaseFontFamily, Mode=TwoWay}"
                                     IsTextSearchEnabled="True"/>
-								<TextBlock FontSize="12"
+                                <TextBlock FontSize="12"
                                            Opacity="0.65"
                                            Text="Full list pulled from installed system fonts."/>
-							</StackPanel>
-						</dev:SettingsCard>
+                            </StackPanel>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Base Font Size"
+                        <dev:SettingsCard Header="Base Font Size"
                                           Description="Root body text size (pixels).">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE1CA;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<NumberBox Value="{x:Bind BodyFontSizePx, Mode=TwoWay}"
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE1CA;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <NumberBox Value="{x:Bind BodyFontSizePx, Mode=TwoWay}"
                                        Minimum="8" Maximum="48"
                                        SpinButtonPlacementMode="Compact"
                                        Width="140"/>
-						</dev:SettingsCard>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Paragraph Alignment"
+                        <dev:SettingsCard Header="Paragraph Alignment"
                                           Description="Alignment for normal paragraph and list text.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE8E4;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ComboBox SelectedItem="{x:Bind BodyTextAlignment, Mode=TwoWay}"
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE8E4;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ComboBox SelectedItem="{x:Bind BodyTextAlignment, Mode=TwoWay}"
                                       Width="160">
-								<x:String>Justify</x:String>
-								<x:String>Left</x:String>
-								<x:String>Center</x:String>
-								<x:String>Right</x:String>
-							</ComboBox>
-						</dev:SettingsCard>
+                                <x:String>Justify</x:String>
+                                <x:String>Left</x:String>
+                                <x:String>Center</x:String>
+                                <x:String>Right</x:String>
+                            </ComboBox>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Page Breaks Between Files"
+                        <dev:SettingsCard Header="Page Breaks Between Files"
                                           Description="Insert a forced page break when concatenating multiple markdown files.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE8FD;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind InsertPageBreaksBetweenFiles, Mode=TwoWay}"/>
-						</dev:SettingsCard>
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE8FD;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind InsertPageBreaksBetweenFiles, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Advanced Extensions"
+                        <dev:SettingsCard Header="Advanced Extensions"
                                           Description="Enable footnotes, task lists, strikethrough, smart punctuation, etc.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE90F;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind UseAdvancedExtensions, Mode=TwoWay}"/>
-						</dev:SettingsCard>
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE90F;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind UseAdvancedExtensions, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Pipe Tables"
+                        <dev:SettingsCard Header="Pipe Tables"
                                           Description="GitHub style pipe table support.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE14C;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind UsePipeTables, Mode=TwoWay}"/>
-						</dev:SettingsCard>
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE14C;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind UsePipeTables, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Auto Links"
+                        <dev:SettingsCard Header="Auto Links"
                                           Description="Plain URLs and emails become clickable links.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE71B;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind UseAutoLinks, Mode=TwoWay}"/>
-						</dev:SettingsCard>
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE71B;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind UseAutoLinks, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
 
-					</dev:SettingsExpander.Items>
-				</dev:SettingsExpander>
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
 
-				<!-- ===================== PAGE LAYOUT SECTION ===================== -->
-				<TextBlock Text="Page Layout"
+                <!-- ===================== PAGE LAYOUT SECTION ===================== -->
+                <TextBlock Text="Page Layout"
                            Style="{StaticResource BodyStrongTextBlockStyle}"
                            Margin="0,12,0,4"/>
 
-				<dev:SettingsExpander Header="Paper Format"
+                <dev:SettingsExpander Header="Paper Format"
                                       Description="Physical paper size used when rendering to PDF."
                                       IsExpanded="False">
-					<dev:SettingsExpander.HeaderIcon>
-						<FontIcon Glyph="&#xE7B8;"/>
-					</dev:SettingsExpander.HeaderIcon>
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE7B8;"/>
+                    </dev:SettingsExpander.HeaderIcon>
 
-					<ComboBox SelectedItem="{x:Bind PaperFormat, Mode=TwoWay}"
+                    <ComboBox SelectedItem="{x:Bind PaperFormat, Mode=TwoWay}"
                               Width="180">
-						<x:String>A4</x:String>
-						<x:String>A3</x:String>
-						<x:String>Letter</x:String>
-					</ComboBox>
+                        <x:String>A4</x:String>
+                        <x:String>A3</x:String>
+                        <x:String>Letter</x:String>
+                    </ComboBox>
 
-					<dev:SettingsExpander.Items>
-						<dev:SettingsCard Header="Orientation Landscape"
+                    <dev:SettingsExpander.Items>
+                        <dev:SettingsCard Header="Orientation Landscape"
                                           Description="Select page orientation (portrait or landscape).">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE7B8;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind Landscape, Mode=TwoWay}"/>
-						</dev:SettingsCard>
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE7B8;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind Landscape, Mode=TwoWay}"/>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Margins"
-                                          Description="Edge spacing in millimeters."
+                        <dev:SettingsCard Header="Margins"
                                           ContentAlignment="Vertical">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE16E;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<Grid ColumnSpacing="16" RowSpacing="10" Margin="0,-40,0,0">
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="*"/>
-									<ColumnDefinition Width="*"/>
-								</Grid.ColumnDefinitions>
-								<Grid.RowDefinitions>
-									<RowDefinition Height="Auto"/>
-									<RowDefinition Height="Auto"/>
-								</Grid.RowDefinitions>
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE16E;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <Grid ColumnSpacing="16" RowSpacing="10" Margin="0,-26,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
 
-								<NumberBox Header="Top (mm)"
+                                <NumberBox Header="Top (mm)"
                                            Value="{x:Bind TopMarginMm, Mode=TwoWay}"
                                            Minimum="0" Maximum="100"
                                            SpinButtonPlacementMode="Compact"
                                            Width="140"/>
 
-								<NumberBox Header="Right (mm)"
+                                <NumberBox Header="Right (mm)"
                                            Grid.Column="1"
                                            Value="{x:Bind RightMarginMm, Mode=TwoWay}"
                                            Minimum="0" Maximum="100"
                                            SpinButtonPlacementMode="Compact"
                                            Width="140"/>
 
-								<NumberBox Header="Bottom (mm)"
+                                <NumberBox Header="Bottom (mm)"
                                            Grid.Row="1"
                                            Value="{x:Bind BottomMarginMm, Mode=TwoWay}"
                                            Minimum="0" Maximum="100"
                                            SpinButtonPlacementMode="Compact"
                                            Width="140"/>
 
-								<NumberBox Header="Left (mm)"
+                                <NumberBox Header="Left (mm)"
                                            Grid.Row="1" Grid.Column="1"
                                            Value="{x:Bind LeftMarginMm, Mode=TwoWay}"
                                            Minimum="0" Maximum="100"
                                            SpinButtonPlacementMode="Compact"
                                            Width="140"/>
-							</Grid>
-						</dev:SettingsCard>
-					</dev:SettingsExpander.Items>
-				</dev:SettingsExpander>
+                            </Grid>
+                        </dev:SettingsCard>
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
 
-				<!-- ===================== Headings & TOC ===================== -->
-				<dev:SettingsExpander Header="Headings &amp; TOC"
-                                      Description="Automatic heading numbering and table of contents"
+                <!-- ===================== Headings ===================== -->
+
+                <dev:SettingsExpander Header="Headings"
+                                      Description="Automatic heading numbering"
                                       IsExpanded="False">
-					<dev:SettingsExpander.HeaderIcon>
-						<FontIcon Glyph="&#xE8EF;"/>
-					</dev:SettingsExpander.HeaderIcon>
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE8EC;"/>
+                    </dev:SettingsExpander.HeaderIcon>
 
-					<ToggleSwitch IsOn="{x:Bind AddTableOfContents, Mode=TwoWay}"/>
+                    <ToggleSwitch IsOn="{x:Bind AddHeaderNumbering, Mode=TwoWay}"/>
 
-					<dev:SettingsExpander.Items>
-						<dev:SettingsCard Header="Heading">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE8EC;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<TextBox Width="260"
+                    <dev:SettingsExpander.Items>
+                        <dev:SettingsCard Header="Header Numbering">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE132;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ComboBox Width="160"
+                                      IsEnabled="{x:Bind AddHeaderNumbering, Mode=OneWay}"
+                                      SelectedItem="{x:Bind HeaderNumberingPattern, Mode=TwoWay}">
+                                <x:String>1.1.1</x:String>
+                                <x:String>1.1.1.</x:String>
+                                <x:String>a.b.c</x:String>
+                                <x:String>a.b.c.</x:String>
+                                <x:String>A.B.C</x:String>
+                                <x:String>A.B.C.</x:String>
+                            </ComboBox>
+                        </dev:SettingsCard>
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
+
+                <!-- ===================== Table of Contents ===================== -->
+                
+                <dev:SettingsExpander Header="Table of Contents"
+                                      Description="Automatic table of contents"
+                                      IsExpanded="False">
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE8EF;"/>
+                    </dev:SettingsExpander.HeaderIcon>
+
+                    <ToggleSwitch IsOn="{x:Bind AddTableOfContents, Mode=TwoWay}"/>
+
+                    <dev:SettingsExpander.Items>
+                        <dev:SettingsCard Header="Heading">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE8EC;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <TextBox Width="260"
                                      IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}"
                                      PlaceholderText="Table of Contents"
                                      Text="{x:Bind TableOfContentsHeaderText, Mode=TwoWay}"/>
-						</dev:SettingsCard>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Header Numbering"
-                                          Description="Choose a numbering pattern. Empty disables numbering.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE132;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ComboBox Width="160"
-									  IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}"
-									  SelectedItem="{x:Bind HeaderNumberingPattern, Mode=TwoWay}">
-								<x:String></x:String>
-								<x:String>1.1.1</x:String>
-								<x:String>1.1.1.</x:String>
-								<x:String>a.b.c</x:String>
-								<x:String>a.b.c.</x:String>
-								<x:String>A.B.C</x:String>
-								<x:String>A.B.C.</x:String>
-							</ComboBox>
-						</dev:SettingsCard>
+                        <dev:SettingsCard Header="Bullet Style">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE142;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ComboBox Width="140"
+								SelectedItem="{x:Bind TableOfContentsBulletStyle, Mode=TwoWay}"
+								IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}">
+                                <x:String>-</x:String>
+                                <x:String>1.</x:String>
+                            </ComboBox>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Indent Nested">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE142;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind IndentTableOfContents, Mode=TwoWay}"
-										IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}"/>
-						</dev:SettingsCard>
+                        <dev:SettingsCard Header="Indent Nested">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE142;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind IndentTableOfContents, Mode=TwoWay}"
+									IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}"/>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Bullet Style">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE142;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ComboBox Width="140"
-									  SelectedItem="{x:Bind TableOfContentsBulletStyle, Mode=TwoWay}"
-									  IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}">
-								<x:String>-</x:String>
-								<x:String>1.</x:String>
-							</ComboBox>
-						</dev:SettingsCard>
-
-						<dev:SettingsCard Header="Place After First Page">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE81E;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind TableOfContentsAfterFirstFile, Mode=TwoWay}"
+                        <dev:SettingsCard Header="Place After First Page">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE81E;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind TableOfContentsAfterFirstFile, Mode=TwoWay}"
                                           IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}"/>
-						</dev:SettingsCard>
-					</dev:SettingsExpander.Items>
-				</dev:SettingsExpander>
+                        </dev:SettingsCard>
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
 
-				<!-- ===================== PAGE NUMBERS SECTION ===================== -->
-				<TextBlock Text="Page Numbers"
-                           Style="{StaticResource BodyStrongTextBlockStyle}"
-                           Margin="0,12,0,4"/>
+                <!-- ===================== PAGE NUMBERS SECTION ===================== -->
 
-				<dev:SettingsExpander Header="Page Number Settings"
+                <dev:SettingsExpander Header="Page Number Settings"
                                       Description="Configure visibility, placement and starting number."
                                       IsExpanded="False">
-					<dev:SettingsExpander.HeaderIcon>
-						<FontIcon Glyph="&#xE12B;"/>
-					</dev:SettingsExpander.HeaderIcon>
+                    <dev:SettingsExpander.HeaderIcon>
+                        <FontIcon Glyph="&#xE12B;"/>
+                    </dev:SettingsExpander.HeaderIcon>
 
-					<ToggleSwitch IsOn="{x:Bind ShowPageNumbers, Mode=TwoWay}"/>
+                    <ToggleSwitch IsOn="{x:Bind ShowPageNumbers, Mode=TwoWay}"/>
 
-					<dev:SettingsExpander.Items>
-						<dev:SettingsCard Header="Position"
-                                          Description="Choose the corner or center region.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE80A;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ComboBox SelectedItem="{x:Bind PageNumberPosition, Mode=TwoWay}"
+                    <dev:SettingsExpander.Items>
+                        <dev:SettingsCard Header="Position">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE80A;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ComboBox SelectedItem="{x:Bind PageNumberPosition, Mode=TwoWay}"
                                       IsEnabled="{x:Bind ShowPageNumbers, Mode=OneWay}"
                                       Width="200">
-								<x:String>TopLeft</x:String>
-								<x:String>TopCenter</x:String>
-								<x:String>TopRight</x:String>
-								<x:String>BottomLeft</x:String>
-								<x:String>BottomCenter</x:String>
-								<x:String>BottomRight</x:String>
-							</ComboBox>
-						</dev:SettingsCard>
+                                <x:String>Top Left</x:String>
+                                <x:String>Top Center</x:String>
+                                <x:String>Top Right</x:String>
+                                <x:String>Bottom Left</x:String>
+                                <x:String>Bottom Center</x:String>
+                                <x:String>Bottom Right</x:String>
+                            </ComboBox>
+                        </dev:SettingsCard>
 
-						<dev:SettingsCard Header="Show On First Page"
-										  Description="Include the page number on the first page.">
-							<dev:SettingsCard.HeaderIcon>
-								<FontIcon Glyph="&#xE12B;"/>
-							</dev:SettingsCard.HeaderIcon>
-							<ToggleSwitch IsOn="{x:Bind ShowPageNumberOnFirstPage, Mode=TwoWay}"
-										  IsEnabled="{x:Bind ShowPageNumbers, Mode=OneWay}"/>
-						</dev:SettingsCard>
-					</dev:SettingsExpander.Items>
-				</dev:SettingsExpander>
+                        <!--<dev:SettingsCard Header="Show On First Page"
+									  Description="Include the page number on the first page.">
+                            <dev:SettingsCard.HeaderIcon>
+                                <FontIcon Glyph="&#xE12B;"/>
+                            </dev:SettingsCard.HeaderIcon>
+                            <ToggleSwitch IsOn="{x:Bind ShowPageNumberOnFirstPage, Mode=TwoWay}"
+									  IsEnabled="{x:Bind ShowPageNumbers, Mode=OneWay}"/>
+                        </dev:SettingsCard>-->
+                    </dev:SettingsExpander.Items>
+                </dev:SettingsExpander>
 
-				<!-- ===================== RENDERING SECTION ===================== -->
-				<TextBlock Text="Rendering"
+                <!-- ===================== RENDERING SECTION ===================== -->
+                <TextBlock Text="Rendering"
                            Style="{StaticResource BodyStrongTextBlockStyle}"
                            Margin="0,12,0,4"/>
 
-				<dev:SettingsCard Header="Print Backgrounds"
+                <dev:SettingsCard Header="Print Backgrounds"
                                   Description="Include CSS background colors &amp; images in output.">
-					<dev:SettingsCard.HeaderIcon>
-						<FontIcon Glyph="&#xE91F;"/>
-					</dev:SettingsCard.HeaderIcon>
-					<ToggleSwitch IsOn="{x:Bind PrintBackground, Mode=TwoWay}"/>
-				</dev:SettingsCard>
-
-				<!-- ===================== INFO / FOOTER ===================== -->
-				<TextBlock Text="Changes apply when you click Apply."
-                           Opacity="0.6"
-                           TextWrapping="Wrap"
-                           Margin="0,16,0,8"/>
-
-				<TextBlock Text="Developer / Structure"
-                           Style="{StaticResource BodyStrongTextBlockStyle}"
-                           Margin="0,12,0,4"/>
-			</StackPanel>
-		</Grid>
-	</ScrollViewer>
+                    <dev:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE91F;"/>
+                    </dev:SettingsCard.HeaderIcon>
+                    <ToggleSwitch IsOn="{x:Bind PrintBackground, Mode=TwoWay}"/>
+                </dev:SettingsCard>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
 </ContentDialog>

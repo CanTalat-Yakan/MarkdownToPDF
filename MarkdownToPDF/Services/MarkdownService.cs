@@ -48,41 +48,37 @@ public sealed class MarkdownService : IMarkdownService
 
         string combinedMarkdown = sb.ToString();
 
-        if (opts.AddHeaderNumbering || opts.AddTableOfContents)
+        // Always process headings so we can extract them for the hierarchy tree.
+        var processed = _headingNumbering.Process(combinedMarkdown, opts, TocPlaceholder);
+        _extractedHeadings = processed.PublicHeadings.ToList();
+
+        string working = processed.ProcessedMarkdown;
+
+        // Only insert a TOC block if requested and headers were found
+        if (opts.AddTableOfContents && processed.Headers.Count > 0)
         {
-            var processed = _headingNumbering.Process(combinedMarkdown, opts, TocPlaceholder);
-            _extractedHeadings = processed.PublicHeadings.ToList();
+            var lines = working.Replace("\r\n", "\n").Split('\n').ToList();
+            int placeholderIndex = lines.IndexOf(TocPlaceholder);
 
-            string working = processed.ProcessedMarkdown;
-            bool wantsToc = opts.AddTableOfContents && processed.Headers.Count > 0;
-
-            if (wantsToc)
+            if (placeholderIndex >= 0)
             {
                 string tocBlock = _tocGenerator.Build(processed.Headers, opts, PageBreakHtml);
-                var lines = working.Replace("\r\n", "\n").Split('\n').ToList();
-                int placeholderIndex = lines.IndexOf(TocPlaceholder);
-
-                if (placeholderIndex >= 0)
-                {
-                    var tocLines = tocBlock.Replace("\r\n", "\n").Split('\n');
-                    lines.RemoveAt(placeholderIndex);
-                    lines.InsertRange(placeholderIndex, tocLines);
-                }
-                else
-                {
-                    lines.Insert(0, ""); // blank after TOC
-                    lines.Insert(0, tocBlock);
-                }
-
-                working = string.Join('\n', lines);
+                var tocLines = tocBlock.Replace("\r\n", "\n").Split('\n');
+                lines.RemoveAt(placeholderIndex);
+                lines.InsertRange(placeholderIndex, tocLines);
+            }
+            else
+            {
+                string tocBlock = _tocGenerator.Build(processed.Headers, opts, PageBreakHtml);
+                lines.Insert(0, ""); // blank after TOC
+                lines.Insert(0, tocBlock);
             }
 
-            combinedMarkdown = working;
+            working = string.Join('\n', lines);
         }
-        else
-        {
-            _extractedHeadings = new();
-        }
+
+        // If numbering is not requested, working still contains anchors but without numbering.
+        combinedMarkdown = working;
 
         var builder = new MarkdownPipelineBuilder();
         if (opts.UseAdvancedExtensions) builder = builder.UseAdvancedExtensions();

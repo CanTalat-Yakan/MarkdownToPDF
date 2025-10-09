@@ -4,6 +4,8 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using MarkdownToPDF.Models;
+using MarkdownToPDF.Services;
 
 namespace MarkdownToPDF.ViewModels;
 
@@ -46,6 +48,10 @@ public sealed class WireframePageViewModel : ObservableObject
 
     public int PagePreviewWidthPx => ComputePagePixelSize().widthPx;
     public int PagePreviewHeightPx => ComputePagePixelSize().heightPx;
+
+    // New: headings extracted from the current document and resolved to pages
+    private List<HeadingInfo> _headingInfos = new();
+    public IReadOnlyList<HeadingInfo> HeadingInfos => _headingInfos;
 
     public WireframePageViewModel(IMarkdownService mdService, IPdfService pdfService)
     {
@@ -152,6 +158,8 @@ public sealed class WireframePageViewModel : ObservableObject
         {
             PreviewPages.Clear();
             _currentHtml = null;
+            _headingInfos = new();
+            OnPropertyChanged(nameof(HeadingInfos));
             CurrentPage = 0;
             return;
         }
@@ -168,6 +176,18 @@ public sealed class WireframePageViewModel : ObservableObject
         var pdfFile = await StorageFile.GetFileFromPathAsync(tempPdfPath);
         await RenderPdfPagesAsync(pdfFile);
         CurrentPage = PreviewPages.Count > 0 ? 1 : 0;
+
+        // Resolve headings to pages for hierarchy navigation
+        _headingInfos = _mdService.GetExtractedHeadings().ToList();
+        try
+        {
+            PdfHeadingPageResolver.AssignPages(tempPdfPath, (IList<HeadingInfo>)_headingInfos);
+        }
+        catch
+        {
+            // Ignore resolution errors; page numbers may remain 0
+        }
+        OnPropertyChanged(nameof(HeadingInfos));
     }
 
     public async Task ExportToAsync(string outputPdfPath, CancellationToken ct = default)
@@ -219,7 +239,6 @@ public sealed class WireframePageViewModel : ObservableObject
 
         Formatting.AdditionalHeadHtml = $@"
             <style>
-                :root {{ --mtpdf-border-color: #d0d7de; }}
                 body {{ font-family:{Formatting.BaseFontFamily}; font-size:{Formatting.BodyFontSizePx}px; margin:{Formatting.BodyMarginPx}px; }}
                 {paragraphRule}
                 h1 {{ text-align: center; }}
@@ -228,11 +247,11 @@ public sealed class WireframePageViewModel : ObservableObject
                 img {{ max-width:100%; }}
                 pre {{ overflow:auto; }}
                 table {{ border-collapse: collapse; border-spacing: 0; width: 100%; }}
-                table, th, td {{ border: 1px solid var(--mtpdf-border-color); }}
+                table, th, td {{ border: 1px solid #aaaaaa; }}
                 table th {{ white-space:nowrap; }}
                 th, td {{ padding: 6px 8px; vertical-align: top; }}
-                thead th {{ background: #f6f8fa; }}
-                tbody tr:nth-child(even) td {{ background:#fbfbfb; }}
+                thead th {{ background: #f4f4f4; }}
+                tbody tr:nth-child(even) td {{ background:#f4f4f4; }}
                 td, th {{ word-break: break-word; }}
                 a, a:visited {{ color:#000; text-decoration: underline; }}
             </style>";

@@ -15,7 +15,6 @@ public partial class NavigationPageMappings
 {
     public static Dictionary<string, Type> PageDictionary { get; } = new Dictionary<string, Type>
     {
-        {"MarkdownToPDF.Views.HomeLandingPage", typeof(MarkdownToPDF.Views.HomeLandingPage)},
         {"MarkdownToPDF.Views.WireframePage", typeof(MarkdownToPDF.Views.WireframePage)},
     };
 }
