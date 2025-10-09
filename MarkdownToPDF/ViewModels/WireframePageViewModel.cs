@@ -250,8 +250,8 @@ public sealed class WireframePageViewModel : ObservableObject
                 table, th, td {{ border: 1px solid #aaaaaa; }}
                 table th {{ white-space:nowrap; }}
                 th, td {{ padding: 6px 8px; vertical-align: top; }}
-                thead th {{ background: #f4f4f4; }}
-                tbody tr:nth-child(even) td {{ background:#f4f4f4; }}
+                thead th {{ background: #f6f6f6; }}
+                tbody tr:nth-child(even) td {{ background:#f6f6f6; }}
                 td, th {{ word-break: break-word; }}
                 a, a:visited {{ color:#000; text-decoration: underline; }}
             </style>";

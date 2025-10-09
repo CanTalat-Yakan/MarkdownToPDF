@@ -18,8 +18,8 @@
                   IsPaneToggleButtonVisible="True"
                   Subtitle="{x:Bind dev:ProcessInfoHelper.VersionWithPrefix}">
             <TitleBar.LeftHeader>
-                <ImageIcon Width="32"
-                           Height="32"
+                <ImageIcon Width="28"
+                           Height="28"
                            Margin="2,0,14,0"
                            Source="ms-appx:///Assets/AppIcon.png" />
             </TitleBar.LeftHeader>
