@@ -39,7 +39,7 @@
                         VerticalAlignment="Center"
                         HorizontalAlignment="Left">
                 <Button x:Name="HierarchyButton"
-                        ToolTipService.ToolTip="Headings"
+                        ToolTipService.ToolTip="Outline"
                         Click="HierarchyButton_Click"
                         Margin="8,0,8,0">
                     <SymbolIcon Symbol="Bookmarks"/>
