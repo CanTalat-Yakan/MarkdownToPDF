@@ -47,6 +47,9 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>BreadcrumbPageMappings.cs</LastGenOutput>
     </None>
+    <Page Update="Views\FileOrderDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Update="Views\SettingsDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

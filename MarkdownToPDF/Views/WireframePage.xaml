@@ -121,6 +121,23 @@
 
             <SplitView.Content>
                 <Grid>
+                    <StackPanel x:Name="CenterStatusPanel"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Visibility="Collapsed"
+                               Spacing="12">
+                        <TextBlock x:Name="ContentTextBlock"
+                                   FontSize="18"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Center"/>
+                        <ProgressBar x:Name="CenterProgressBar"
+                                     Width="130"
+                                     IsIndeterminate="True"
+                                     ShowPaused="False"
+                                     ShowError="False"
+                                     Visibility="Collapsed"/>
+                    </StackPanel>
+                    
                     <ScrollViewer x:Name="PreviewScrollViewer"
                                   ViewChanged="PreviewScrollViewer_ViewChanged"
                                   HorizontalScrollBarVisibility="Disabled"
@@ -144,13 +161,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-
-                    <TextBlock x:Name="ContentTextBlock"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               FontSize="18"
-                               TextWrapping="Wrap"
-                               TextAlignment="Center"/>
 
                     <Button x:Name="AddFilesInitialButton"
                             Click="AddFilesInitialButton_Click"

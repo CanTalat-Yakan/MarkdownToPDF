@@ -53,6 +53,14 @@ public sealed class WireframePageViewModel : ObservableObject
     private List<HeadingInfo> _headingInfos = new();
     public IReadOnlyList<HeadingInfo> HeadingInfos => _headingInfos;
 
+    // Loading progress support: expected page count during rendering
+    private int _totalPagesExpected;
+    public int TotalPagesExpected
+    {
+        get => _totalPagesExpected;
+        private set => SetProperty(ref _totalPagesExpected, value);
+    }
+
     public WireframePageViewModel(IMarkdownService mdService, IPdfService pdfService)
     {
         _mdService = mdService;
@@ -80,7 +88,11 @@ public sealed class WireframePageViewModel : ObservableObject
             .Where(p => !string.IsNullOrWhiteSpace(p))
             .ToArray();
 
+        OnPropertyChanged(nameof(CanExport));
+
         CurrentMarkdownPath = CurrentMarkdownPaths.FirstOrDefault();
+        OnPropertyChanged(nameof(CurrentMarkdownFileName));
+
         await RebuildPreviewAsync(ct);
     }
 
@@ -161,6 +173,8 @@ public sealed class WireframePageViewModel : ObservableObject
             _headingInfos = new();
             OnPropertyChanged(nameof(HeadingInfos));
             CurrentPage = 0;
+            OnPropertyChanged(nameof(CanExport));
+            TotalPagesExpected = 0;
             return;
         }
 
@@ -188,6 +202,10 @@ public sealed class WireframePageViewModel : ObservableObject
             // Ignore resolution errors; page numbers may remain 0
         }
         OnPropertyChanged(nameof(HeadingInfos));
+        OnPropertyChanged(nameof(CanExport));
+
+        // Reset expected count after rendering completes
+        TotalPagesExpected = 0;
     }
 
     public async Task ExportToAsync(string outputPdfPath, CancellationToken ct = default)
@@ -211,6 +229,8 @@ public sealed class WireframePageViewModel : ObservableObject
         PreviewPages.Clear();
 
         var doc = await PdfDocument.LoadFromFileAsync(pdfFile);
+        TotalPagesExpected = (int)doc.PageCount;
+
         for (uint i = 0; i < doc.PageCount; i++)
         {
             using var page = doc.GetPage(i);

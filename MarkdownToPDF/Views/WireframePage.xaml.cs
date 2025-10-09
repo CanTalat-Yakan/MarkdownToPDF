@@ -33,7 +33,7 @@ public sealed partial class WireframePage : Page
         if (ViewModel.PreviewPages != null)
             ViewModel.PreviewPages.CollectionChanged += PreviewPages_CollectionChanged;
 
-        _ = PickFilesAndLoadAsync();
+        //_ = PickFilesAndLoadAsync();
     }
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -59,6 +59,49 @@ public sealed partial class WireframePage : Page
                 catch { }
             });
         }
+
+        if (e.PropertyName == nameof(WireframePageViewModel.CanExport))
+        {
+            // Refresh action buttons visibility when exportability changes
+            _ = DispatcherQueue.TryEnqueue(UpdateActionVisibility);
+        }
+
+        if (e.PropertyName == nameof(WireframePageViewModel.TotalPagesExpected))
+        {
+            UpdateProgressBar();
+        }
+    }
+
+    private void UpdateProgressBar()
+    {
+        // show percentage if we know expected total; otherwise indeterminate
+        var expected = ViewModel.TotalPagesExpected;
+        if (expected > 0)
+        {
+            var current = Math.Clamp(ViewModel.TotalPages, 0, expected);
+            var percent = (double)current / expected * 100.0;
+            CenterProgressBar.IsIndeterminate = false;
+            CenterProgressBar.Minimum = 0;
+            CenterProgressBar.Maximum = 100;
+            CenterProgressBar.Value = percent;
+            ContentTextBlock.Text = $"Loading preview... {Math.Round(percent)}%";
+            CenterStatusPanel.Visibility = Visibility.Visible;
+            CenterProgressBar.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            // No known expected count -> indeterminate if loading, otherwise hidden
+            if (ViewModel.PreviewPages.Count == 0 && ViewModel.CanExport)
+            {
+                ContentTextBlock.Text = "Loading preview...";
+                CenterProgressBar.IsIndeterminate = true;
+                CenterStatusPanel.Visibility = Visibility.Visible;
+                CenterProgressBar.Visibility = Visibility.Visible;
+            }
+        }
+
+        // Ensure buttons reflect loading state
+        UpdateActionVisibility();
     }
 
     private void BuildHierarchyTree()
@@ -125,14 +168,35 @@ public sealed partial class WireframePage : Page
     {
         // If there are preview pages, show the action panel (Save + Re-add)
         var hasPages = ViewModel.PreviewPages is not null && ViewModel.PreviewPages.Count > 0;
-        AddFilesInitialButton.Visibility = hasPages ? Visibility.Collapsed : Visibility.Visible;
+        var isLoading = CenterProgressBar.Visibility == Visibility.Visible;
 
-        // Content text visibility
-        ContentTextBlock.Visibility = hasPages ? Visibility.Collapsed : Visibility.Visible;
+        // Bottom-right actions
+        AddFilesInitialButton.Visibility = (!hasPages && !isLoading) ? Visibility.Visible : Visibility.Collapsed;
+        ExportButton.Visibility = hasPages && ViewModel.CanExport ? Visibility.Visible : Visibility.Collapsed;
+
+        // Toolbar trash icon
+        ClearFilesButton.Visibility = hasPages ? Visibility.Visible : Visibility.Collapsed;
+
+        // Center status panel logic:
+        // 1) If progress is explicitly visible, keep the panel visible (do not override during loading)
+        if (isLoading)
+        {
+            CenterStatusPanel.Visibility = Visibility.Visible;
+            return;
+        }
+
+        // 2) If no pages, show instruction and hide progress
         if (!hasPages)
         {
+            CenterStatusPanel.Visibility = Visibility.Visible;
             ContentTextBlock.Text = "No files selected. Click 'Add Files' to begin.";
+            CenterProgressBar.Visibility = Visibility.Collapsed;
+            CenterProgressBar.IsIndeterminate = true;
+            return;
         }
+
+        // 3) Otherwise hide center panel
+        CenterStatusPanel.Visibility = Visibility.Collapsed;
     }
 
     private void PreviewPages_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -142,6 +206,9 @@ public sealed partial class WireframePage : Page
         {
             UpdateActionVisibility();
             BuildHierarchyTree();
+
+            // update progress when a page is added
+            UpdateProgressBar();
 
             // When previews change (reload, clear, etc.) ensure the scroll-to-top button is hidden
             try
@@ -189,7 +256,9 @@ public sealed partial class WireframePage : Page
         catch (Exception ex)
         {
             ContentTextBlock.Text = $"Unable to clear/load files: {ex.Message}";
-            ContentTextBlock.Visibility = Visibility.Visible;
+            CenterStatusPanel.Visibility = Visibility.Visible;
+            CenterProgressBar.Visibility = Visibility.Collapsed;
+            UpdateActionVisibility();
         }
     }
 
@@ -220,12 +289,44 @@ public sealed partial class WireframePage : Page
             var files = await picker.PickMultipleFilesAsync();
             if (files is null || files.Count == 0)
             {
-                ContentTextBlock.Text = "No files selected.";
-                ContentTextBlock.Visibility = Visibility.Visible;
+                ContentTextBlock.Text = "No files selected. Click 'Add Files' to begin.";
+                CenterStatusPanel.Visibility = Visibility.Visible;
+                CenterProgressBar.Visibility = Visibility.Collapsed;
+                UpdateActionVisibility();
                 return;
             }
 
-            await ViewModel.LoadFromFilesAsync(files.Select(f => f.Path).ToArray());
+            // Show order dialog before loading
+            var orderDialog = new FileOrderDialog(files.Select(f => f.Path))
+            {
+                XamlRoot = this.Content.XamlRoot,
+                RequestedTheme = ((FrameworkElement)this.Content).ActualTheme
+            };
+            var result = await orderDialog.ShowAsync();
+            if (result != ContentDialogResult.Primary)
+            {
+                // User canceled ordering/generation
+                ContentTextBlock.Text = "No files selected. Click 'Add Files' to begin.";
+                CenterStatusPanel.Visibility = Visibility.Visible;
+                CenterProgressBar.Visibility = Visibility.Collapsed;
+                UpdateActionVisibility();
+                return;
+            }
+
+            var orderedPaths = orderDialog.GetOrderedPaths();
+
+            // Show loading progress immediately BEFORE starting heavy work
+            ContentTextBlock.Text = "Loading preview...";
+            CenterStatusPanel.Visibility = Visibility.Visible;
+            CenterProgressBar.Visibility = Visibility.Visible;
+            CenterProgressBar.IsIndeterminate = true;
+            UpdateActionVisibility();
+
+            // Yield UI thread so the text/progress can render before we start work
+            await Task.Yield();
+            await Task.Delay(1);
+
+            await ViewModel.LoadFromFilesAsync(orderedPaths);
 
             // ensure UI resets: hide scroll-to-top and scroll to top after loading
             _ = DispatcherQueue.TryEnqueue(() =>
@@ -241,7 +342,9 @@ public sealed partial class WireframePage : Page
                 try { if (!PageInputBox.IsFocusEngaged) PageInputBox.Text = ViewModel.CurrentPage.ToString(); } catch { }
             });
 
-            ContentTextBlock.Visibility = Visibility.Collapsed;
+            // hide center status when pages are available
+            CenterProgressBar.Visibility = Visibility.Collapsed;
+            CenterStatusPanel.Visibility = Visibility.Collapsed;
 
             // build hierarchy once headings are available
             BuildHierarchyTree();
@@ -250,7 +353,9 @@ public sealed partial class WireframePage : Page
         catch (Exception ex)
         {
             ContentTextBlock.Text = $"Unable to render preview. Error: {ex.Message}";
-            ContentTextBlock.Visibility = Visibility.Visible;
+            CenterStatusPanel.Visibility = Visibility.Visible;
+            CenterProgressBar.Visibility = Visibility.Collapsed;
+            UpdateActionVisibility();
         }
     }
 
@@ -261,7 +366,9 @@ public sealed partial class WireframePage : Page
             if (!ViewModel.CanExport)
             {
                 ContentTextBlock.Text = "Open one or more markdown files first.";
-                ContentTextBlock.Visibility = Visibility.Visible;
+                CenterStatusPanel.Visibility = Visibility.Visible;
+                CenterProgressBar.Visibility = Visibility.Collapsed;
+                UpdateActionVisibility();
                 return;
             }
 
@@ -280,12 +387,18 @@ public sealed partial class WireframePage : Page
             await ViewModel.ExportToAsync(targetFile.Path);
 
             ContentTextBlock.Text = $"Exported to: {targetFile.Path}";
-            ContentTextBlock.Visibility = Visibility.Visible;
+            CenterStatusPanel.Visibility = Visibility.Visible;
+            CenterProgressBar.Visibility = Visibility.Collapsed;
         }
         catch (Exception ex)
         {
             ContentTextBlock.Text = $"Export failed. Error: {ex.Message}";
-            ContentTextBlock.Visibility = Visibility.Visible;
+            CenterStatusPanel.Visibility = Visibility.Visible;
+            CenterProgressBar.Visibility = Visibility.Collapsed;
+        }
+        finally
+        {
+            UpdateActionVisibility();
         }
     }
 
@@ -300,6 +413,7 @@ public sealed partial class WireframePage : Page
         await dlg.ShowAsync();
         // After settings, headings might change. Rebuild preview already happens via ViewModel.
         BuildHierarchyTree();
+        UpdateActionVisibility();
     }
 
     private void PreviewScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
