@@ -19,6 +19,9 @@ public sealed partial class WireframePage : Page
     // threshold in pixels to show scroll-to-top button
     private const double ShowScrollToTopThreshold = 200.0;
 
+    // Debounce timer to hide progress a short moment after the preview stops changing
+    private readonly DispatcherTimer _progressHideTimer;
+
     public WireframePage()
     {
         InitializeComponent();
@@ -33,7 +36,25 @@ public sealed partial class WireframePage : Page
         if (ViewModel.PreviewPages != null)
             ViewModel.PreviewPages.CollectionChanged += PreviewPages_CollectionChanged;
 
+        // Initialize debounce timer
+        _progressHideTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(350)
+        };
+        _progressHideTimer.Tick += ProgressHideTimer_Tick;
+
         //_ = PickFilesAndLoadAsync();
+    }
+
+    private void ProgressHideTimer_Tick(object? sender, object e)
+    {
+        _progressHideTimer.Stop();
+        // If we have any pages rendered, hide the progress UI as the preview is usable
+        if (ViewModel.PreviewPages is { Count: > 0 })
+        {
+            HideProgressUI();
+            UpdateActionVisibility();
+        }
     }
 
     private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -72,31 +93,69 @@ public sealed partial class WireframePage : Page
         }
     }
 
+    private void HideProgressUI()
+    {
+        CenterProgressBar.IsIndeterminate = false;
+        CenterProgressBar.Visibility = Visibility.Collapsed;
+        // Hide center status panel when we have pages, otherwise keep visible for instructions
+        CenterStatusPanel.Visibility = (ViewModel.PreviewPages is { Count: > 0 }) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    private void ShowIndeterminateProgress(string? message = null)
+    {
+        if (!string.IsNullOrWhiteSpace(message))
+            ContentTextBlock.Text = message!;
+
+        CenterProgressBar.IsIndeterminate = true;
+        CenterProgressBar.Minimum = 0;
+        CenterProgressBar.Maximum = 100;
+        CenterStatusPanel.Visibility = Visibility.Visible;
+        CenterProgressBar.Visibility = Visibility.Visible;
+    }
+
+    private void ShowDeterminateProgress(double percent, string? message = null)
+    {
+        if (!string.IsNullOrWhiteSpace(message))
+            ContentTextBlock.Text = message!;
+
+        CenterProgressBar.IsIndeterminate = false;
+        CenterProgressBar.Minimum = 0;
+        CenterProgressBar.Maximum = 100;
+        CenterProgressBar.Value = percent;
+        CenterStatusPanel.Visibility = Visibility.Visible;
+        CenterProgressBar.Visibility = Visibility.Visible;
+    }
+
     private void UpdateProgressBar()
     {
         // show percentage if we know expected total; otherwise indeterminate
         var expected = ViewModel.TotalPagesExpected;
+        var current = Math.Max(0, ViewModel.TotalPages);
+
         if (expected > 0)
         {
-            var current = Math.Clamp(ViewModel.TotalPages, 0, expected);
-            var percent = (double)current / expected * 100.0;
-            CenterProgressBar.IsIndeterminate = false;
-            CenterProgressBar.Minimum = 0;
-            CenterProgressBar.Maximum = 100;
-            CenterProgressBar.Value = percent;
-            ContentTextBlock.Text = $"Loading preview... {Math.Round(percent)}%";
-            CenterStatusPanel.Visibility = Visibility.Visible;
-            CenterProgressBar.Visibility = Visibility.Visible;
+            // If we've reached or exceeded expected pages, hide the progress UI
+            if (current >= expected)
+            {
+                HideProgressUI();
+            }
+            else
+            {
+                var percent = Math.Clamp((double)current / expected * 100.0, 0, 100);
+                ShowDeterminateProgress(percent, $"Loading preview... {Math.Round(percent)}%");
+            }
         }
         else
         {
-            // No known expected count -> indeterminate if loading, otherwise hidden
-            if (ViewModel.PreviewPages.Count == 0 && ViewModel.CanExport)
+            // No known expected count -> show indeterminate only while we have no pages
+            if ((ViewModel.PreviewPages?.Count ?? 0) == 0 && ViewModel.CanExport)
             {
-                ContentTextBlock.Text = "Loading preview...";
-                CenterProgressBar.IsIndeterminate = true;
-                CenterStatusPanel.Visibility = Visibility.Visible;
-                CenterProgressBar.Visibility = Visibility.Visible;
+                ShowIndeterminateProgress("Loading preview...");
+            }
+            else
+            {
+                // We already have some pages; hide progress regardless of percent accuracy
+                HideProgressUI();
             }
         }
 
@@ -222,6 +281,14 @@ public sealed partial class WireframePage : Page
                 // ignore any exceptions when changing view
             }
 
+            // Debounce hide of progress after the collection stabilizes
+            try
+            {
+                _progressHideTimer.Stop();
+                _progressHideTimer.Start();
+            }
+            catch { }
+
             // Update page input to reflect new current page
             try
             {
@@ -322,6 +389,9 @@ public sealed partial class WireframePage : Page
             CenterProgressBar.IsIndeterminate = true;
             UpdateActionVisibility();
 
+            // Stop any pending hide while we start loading
+            _progressHideTimer.Stop();
+
             // Yield UI thread so the text/progress can render before we start work
             await Task.Yield();
             await Task.Delay(1);
@@ -342,12 +412,13 @@ public sealed partial class WireframePage : Page
                 try { if (!PageInputBox.IsFocusEngaged) PageInputBox.Text = ViewModel.CurrentPage.ToString(); } catch { }
             });
 
-            // hide center status when pages are available
-            CenterProgressBar.Visibility = Visibility.Collapsed;
-            CenterStatusPanel.Visibility = Visibility.Collapsed;
-
             // build hierarchy once headings are available
             BuildHierarchyTree();
+
+            // Debounce hide in case more pages continue to arrive after the async load
+            _progressHideTimer.Stop();
+            _progressHideTimer.Start();
+
             UpdateActionVisibility();
         }
         catch (Exception ex)
