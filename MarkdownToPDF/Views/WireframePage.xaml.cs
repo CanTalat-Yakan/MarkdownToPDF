@@ -304,11 +304,6 @@ public sealed partial class WireframePage : Page
         await PickFilesAndLoadAsync();
     }
 
-    private async void ReaddButton_Click(object sender, RoutedEventArgs e)
-    {
-        await PickFilesAndLoadAsync();
-    }
-
     // Handler for toolbar ClearFiles button
     private async void ClearFiles_Click(object sender, RoutedEventArgs e)
     {
