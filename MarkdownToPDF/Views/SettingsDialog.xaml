@@ -42,17 +42,6 @@
                     </dev:SettingsExpander.HeaderIcon>
                     <dev:SettingsExpander.Items>
 
-                        <!--<dev:SettingsCard Header="Body Margin"
-                                          Description="Padding inside page content (pixels).">
-                            <dev:SettingsCard.HeaderIcon>
-                                <FontIcon Glyph="&#xF574;"/>
-                            </dev:SettingsCard.HeaderIcon>
-                            <NumberBox Value="{x:Bind BodyMarginPx, Mode=TwoWay}"
-                                       Minimum="0" Maximum="200"
-                                       SpinButtonPlacementMode="Compact"
-                                       Width="140"/>
-                        </dev:SettingsCard>-->
-
                         <dev:SettingsCard Header="Font Family"
                                           Description="Primary typeface used for body text in output.">
                             <dev:SettingsCard.HeaderIcon>
@@ -235,7 +224,7 @@
                 </dev:SettingsExpander>
 
                 <!-- ===================== Table of Contents ===================== -->
-                
+
                 <dev:SettingsExpander Header="Table of Contents"
                                       Description="Automatic table of contents"
                                       IsExpanded="False">
@@ -337,6 +326,13 @@
                     </dev:SettingsCard.HeaderIcon>
                     <ToggleSwitch IsOn="{x:Bind PrintBackground, Mode=TwoWay}"/>
                 </dev:SettingsCard>
+
+                <TextBox Text="{x:Bind HeadHtmlText, Mode=TwoWay}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         HorizontalAlignment="Stretch"
+                         VerticalAlignment="Top"
+                         Width="Auto"/>
             </StackPanel>
         </Grid>
     </ScrollViewer>

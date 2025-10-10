@@ -120,6 +120,8 @@ public sealed class WireframePageViewModel : ObservableObject
         Formatting.TableOfContentsHeaderText = newFormatting.TableOfContentsHeaderText;
         Formatting.TableOfContentsAfterFirstFile = newFormatting.TableOfContentsAfterFirstFile;
 
+        Formatting.HeadHtml = newFormatting.HeadHtml;
+
         Export.PaperFormat = newExport.PaperFormat;
         Export.Landscape = newExport.Landscape;
         Export.PrintBackground = newExport.PrintBackground;
@@ -257,24 +259,12 @@ public sealed class WireframePageViewModel : ObservableObject
             _ => "p, li { text-align: justify; text-justify: inter-word; hyphens: auto; }"
         };
 
-        Formatting.AdditionalHeadHtml = $@"
+        Formatting.BaseHeadHtml = $@"
             <style>
                 body {{ font-family:{Formatting.BaseFontFamily}; font-size:{Formatting.BodyFontSizePx}px; margin:{Formatting.BodyMarginPx}px; }}
                 {paragraphRule}
-                h1 {{ text-align: center; }}
-                h2 {{ margin-top: 2.2em; }}
-                h2, h3, h4, h5, h6, pre, code {{ text-align: left; }}
-                img {{ max-width:100%; }}
-                pre {{ overflow:auto; }}
-                table {{ border-collapse: collapse; border-spacing: 0; width: 100%; }}
-                table, th, td {{ border: 1px solid #aaaaaa; }}
-                table th {{ white-space:nowrap; }}
-                th, td {{ padding: 6px 8px; vertical-align: top; }}
-                thead th {{ background: #f6f6f6; }}
-                tbody tr:nth-child(even) td {{ background:#f6f6f6; }}
-                td, th {{ word-break: break-word; }}
-                a, a:visited {{ color:#000; text-decoration: underline; }}
-            </style>";
+            </style>
+            ";
     }
 
     private ExportOptions BuildExportOptions(string outputPath)

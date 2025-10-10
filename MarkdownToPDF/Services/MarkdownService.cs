@@ -91,7 +91,7 @@ public sealed class MarkdownService : IMarkdownService
             <!DOCTYPE html>
             <html>
                 <head>
-                    <meta charset='utf-8'>{opts.AdditionalHeadHtml}
+                    <meta charset='utf-8'>{opts.HeadHtml + opts.BaseHeadHtml}
                 </head>
                 <body>
                     {bodyHtml}

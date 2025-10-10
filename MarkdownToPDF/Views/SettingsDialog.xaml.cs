@@ -36,7 +36,6 @@ public sealed partial class SettingsDialog : ContentDialog
 
     public bool ShowPageNumberOnFirstPage { get; set; } = true;
 
-    // Display label used by ComboBox (e.g. "Bottom Right")
     public string PageNumberPosition { get; set; } = "Bottom Right";
     public double TopMarginMm { get; set; }
     public double RightMarginMm { get; set; }
@@ -45,7 +44,6 @@ public sealed partial class SettingsDialog : ContentDialog
 
     public string HeaderNumberingPattern { get; set; } = "1.1.1";
 
-    // New dependency property for header numbering toggle
     public bool AddHeaderNumbering
     {
         get => (bool)GetValue(AddHeaderNumberingProperty);
@@ -71,6 +69,8 @@ public sealed partial class SettingsDialog : ContentDialog
     public string TableOfContentsHeaderText { get; set; } = "Table of Contents";
     public bool TableOfContentsAfterFirstFile { get; set; }
 
+    public string HeadHtmlText { get; set; }
+
     public SettingsDialog(WireframePageViewModel viewModel)
     {
         InitializeComponent();
@@ -85,13 +85,13 @@ public sealed partial class SettingsDialog : ContentDialog
         UsePipeTables = formattingOptions.UsePipeTables;
         UseAutoLinks = formattingOptions.UseAutoLinks;
         InsertPageBreaksBetweenFiles = formattingOptions.InsertPageBreaksBetweenFiles;
+        HeadHtmlText = formattingOptions.HeadHtml;
 
         var exportOptions = viewModel.Export;
         PaperFormat = exportOptions.PaperFormat;
         Landscape = exportOptions.Landscape;
         PrintBackground = exportOptions.PrintBackground;
         ShowPageNumbers = exportOptions.ShowPageNumbers;
-        // Convert stored key (no spaces) to display label with spaces
         PageNumberPosition = StoredToDisplayPosition(exportOptions.PageNumberPosition);
         ShowPageNumberOnFirstPage = exportOptions.ShowPageNumberOnFirstPage;
         TopMarginMm = exportOptions.TopMarginMm;
@@ -238,7 +238,8 @@ public sealed partial class SettingsDialog : ContentDialog
             IndentTableOfContents = IndentTableOfContents,
             TableOfContentsBulletStyle = TableOfContentsBulletStyle,
             TableOfContentsHeaderText = TableOfContentsHeaderText,
-            TableOfContentsAfterFirstFile = TableOfContentsAfterFirstFile
+            TableOfContentsAfterFirstFile = TableOfContentsAfterFirstFile,
+            HeadHtml = HeadHtmlText
         };
 
         var newExport = new ExportOptions
@@ -247,7 +248,6 @@ public sealed partial class SettingsDialog : ContentDialog
             Landscape = Landscape,
             PrintBackground = PrintBackground,
             ShowPageNumbers = ShowPageNumbers,
-            // Convert display label back to stored key
             PageNumberPosition = DisplayToStoredPosition(PageNumberPosition),
             ShowPageNumberOnFirstPage = ShowPageNumberOnFirstPage,
             TopMarginMm = TopMarginMm,
