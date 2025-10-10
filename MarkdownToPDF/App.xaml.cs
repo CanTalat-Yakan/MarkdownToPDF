@@ -34,7 +34,8 @@ public partial class App : Application
         services.AddSingleton<IJsonNavigationService, JsonNavigationService>();
 
         services.AddSingleton<IMarkdownService, MarkdownService>();
-        services.AddSingleton<IPdfService, PuppeteerPdfService>();
+        // Switch to WebView2-based PDF generator for MSIX compatibility
+        services.AddSingleton<IPdfService, WebView2PdfService>();
 
         services.AddTransient<WireframePageViewModel>();
 
