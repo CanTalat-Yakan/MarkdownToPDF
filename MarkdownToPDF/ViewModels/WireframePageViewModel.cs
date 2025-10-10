@@ -115,10 +115,9 @@ public sealed class WireframePageViewModel : ObservableObject
         Formatting.AddHeaderNumbering = newFormatting.AddHeaderNumbering;
         Formatting.HeaderNumberingPattern = newFormatting.HeaderNumberingPattern;
         Formatting.AddTableOfContents = newFormatting.AddTableOfContents;
-        Formatting.IndentTableOfContents = newFormatting.IndentTableOfContents;
-        Formatting.TableOfContentsBulletStyle = newFormatting.TableOfContentsBulletStyle;
         Formatting.TableOfContentsHeaderText = newFormatting.TableOfContentsHeaderText;
         Formatting.TableOfContentsAfterFirstFile = newFormatting.TableOfContentsAfterFirstFile;
+        Formatting.TableOfContentsLeaders = newFormatting.TableOfContentsLeaders;
 
         Formatting.HeadHtml = newFormatting.HeadHtml;
 

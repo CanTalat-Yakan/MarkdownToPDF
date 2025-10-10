@@ -223,11 +223,10 @@
                     </dev:SettingsExpander.Items>
                 </dev:SettingsExpander>
 
-                <!-- ===================== Table of Contents ===================== -->
+                <!-- ===================== Table of Contents (HTML only) ===================== -->
 
                 <dev:SettingsExpander Header="Table of Contents"
-                                      Description="Automatic table of contents"
-                                      IsExpanded="False">
+                                      Description="Automatic table of contents (HTML)">
                     <dev:SettingsExpander.HeaderIcon>
                         <FontIcon Glyph="&#xE8FD;"/>
                     </dev:SettingsExpander.HeaderIcon>
@@ -245,24 +244,16 @@
                                      Text="{x:Bind TableOfContentsHeaderText, Mode=TwoWay}"/>
                         </dev:SettingsCard>
 
-                        <dev:SettingsCard Header="Bullet Style">
+                        <dev:SettingsCard Header="Leaders">
                             <dev:SettingsCard.HeaderIcon>
                                 <FontIcon Glyph="&#xE712;"/>
                             </dev:SettingsCard.HeaderIcon>
-                            <ComboBox Width="140"
-								SelectedItem="{x:Bind TableOfContentsBulletStyle, Mode=TwoWay}"
-								IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}">
-                                <x:String>-</x:String>
-                                <x:String>1.</x:String>
+                            <ComboBox Width="160"
+                                      IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}"
+                                      SelectedItem="{x:Bind TableOfContentsLeaders, Mode=TwoWay}">
+                                <x:String>Dotted</x:String>
+                                <x:String>None</x:String>
                             </ComboBox>
-                        </dev:SettingsCard>
-
-                        <dev:SettingsCard Header="Indent Nested">
-                            <dev:SettingsCard.HeaderIcon>
-                                <FontIcon Glyph="&#xE8A4;"/>
-                            </dev:SettingsCard.HeaderIcon>
-                            <ToggleSwitch IsOn="{x:Bind IndentTableOfContents, Mode=TwoWay}"
-									IsEnabled="{x:Bind AddTableOfContents, Mode=OneWay}"/>
                         </dev:SettingsCard>
 
                         <dev:SettingsCard Header="Place After First Page">
@@ -304,12 +295,12 @@
                         </dev:SettingsCard>
 
                         <dev:SettingsCard Header="Show On First Page"
-									  Description="Include the page number on the first page.">
+						  Description="Include the page number on the first page.">
                             <dev:SettingsCard.HeaderIcon>
                                 <FontIcon Glyph="&#xF571;"/>
                             </dev:SettingsCard.HeaderIcon>
                             <ToggleSwitch IsOn="{x:Bind ShowPageNumberOnFirstPage, Mode=TwoWay}"
-									  IsEnabled="{x:Bind ShowPageNumbers, Mode=OneWay}"/>
+						  IsEnabled="{x:Bind ShowPageNumbers, Mode=OneWay}"/>
                         </dev:SettingsCard>
                     </dev:SettingsExpander.Items>
                 </dev:SettingsExpander>

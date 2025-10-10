@@ -79,9 +79,8 @@ internal sealed class MarkdownHeadingNumbering
 
             string anchor = BuildAnchor(rawText, numbering, keepDots: false);
 
-            // Add two spaces between numbering and header text to increase separation
             if (!suppressFirstFileHeaders && numberingEnabled && !isSuperHeading && numbering.Length > 0)
-                lines[i] = $"{new string('#', markdownLevel)} {numbering}⠀{rawText} {{#{anchor}}}";
+                lines[i] = $"{new string('#', markdownLevel)} {numbering} {rawText} {{#{anchor}}}";
             else
                 lines[i] = $"{new string('#', markdownLevel)} {rawText} {{#{anchor}}}";
 
@@ -94,8 +93,7 @@ internal sealed class MarkdownHeadingNumbering
             .Select(h => new HeadingInfo
             {
                 Level = h.LogicalLevel,
-                // Keep double space in the displayed heading text as well
-                Text = string.IsNullOrEmpty(h.Numbering) ? h.Text : $"{h.Numbering}⠀{h.Text}",
+                Text = string.IsNullOrEmpty(h.Numbering) ? h.Text : $"{h.Numbering} {h.Text}",
                 Anchor = h.Anchor,
                 Y = 0,
                 Page = 0

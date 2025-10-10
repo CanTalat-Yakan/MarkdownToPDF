@@ -35,8 +35,7 @@ public sealed class FormattingOptions
     public string HeaderNumberingPattern { get; set; } = "1.1.1.";
 
     public bool AddTableOfContents { get; set; } = false;
-    public bool IndentTableOfContents { get; set; } = true;
-    public string TableOfContentsBulletStyle { get; set; } = "-";
     public string TableOfContentsHeaderText { get; set; } = "Table of Contents";
     public bool TableOfContentsAfterFirstFile { get; set; } = false;
+    public string TableOfContentsLeaders { get; set; } = "Dotted";
 }

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.Web.WebView2.Core;
 
 namespace MarkdownToPDF.Services;
@@ -85,19 +84,76 @@ public sealed class WebView2PdfService : IPdfService
             settings.PageWidth = wIn;
             settings.PageHeight = hIn;
 
-            // Create PDF
+            // If the HTML contains our HTML TOC container, run a two-pass print to inject page numbers into the TOC.
+            bool hasHtmlToc = html.Contains("id=\"md2pdf-toc\"", StringComparison.OrdinalIgnoreCase);
+            if (hasHtmlToc)
+            {
+                // First pass -> temp PDF for page resolution
+                var tempFirstPass = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}_first.pdf");
+                await core.PrintToPdfAsync(tempFirstPass, settings);
+
+                // Resolve actual page numbers by inspecting the produced PDF
+                var headings = _markdownService.GetExtractedHeadings().ToList();
+                PdfHeadingPageResolver.AssignPages(tempFirstPass, headings);
+
+                // Build a simple href->page mapping and inject via JS without using reflection-based JSON serialization
+                var mapPairs = headings.Where(h => h.Page > 0)
+                                       .Select(h => ($"#" + h.Anchor, h.Page));
+                string jsObject = "{" + string.Join(
+                    ",",
+                    mapPairs.Select(p => $"\"{EscapeJs(p.Item1)}\":" + p.Item2.ToString())) + "}";
+
+                string script = $@"
+                    (function() {{
+                        try {{
+                            const map = {jsObject};
+                            const nodes = document.querySelectorAll('#md2pdf-toc .page');
+                            nodes.forEach(el => {{
+                                const href = el.getAttribute('data-href');
+                                if (!href || !(href in map)) return;
+                                    el.innerHTML = '<span class=""visually-hidden"">Page&nbsp;</span>' + map[href];
+                            }});
+                        }} catch(e) {{ /* ignore */ }}
+                    }})();";
+                await core.ExecuteScriptAsync(script);
+
+                // Final pass -> print to requested output path
+                await core.PrintToPdfAsync(opts.OutputPath, settings);
+
+                // Re-resolve on the final PDF to be safe, then write outline and fix footer
+                try
+                {
+                    PdfHeadingPageResolver.AssignPages(opts.OutputPath, headings);
+                }
+                catch { }
+
+                PdfOutlineWriter.InjectOutline(opts.OutputPath, headings);
+
+                if (!opts.ShowPageNumberOnFirstPage)
+                    PdfFirstPageFooterRewriter.ClearFooterOnFirstPage(opts.OutputPath, opts.BottomMarginMm);
+
+                // Clear header band on all pages using top margin as height
+                PdfFirstPageFooterRewriter.ClearHeaderOnAllPages(opts.OutputPath, opts.TopMarginMm);
+
+                return;
+            }
+
+            // Single pass: Create PDF
             await core.PrintToPdfAsync(opts.OutputPath, settings);
 
             // Assign actual page numbers by inspecting the produced PDF
-            var headings = _markdownService.GetExtractedHeadings();
-            PdfHeadingPageResolver.AssignPages(opts.OutputPath, (IList<HeadingInfo>)headings);
+            var headingsSingle = _markdownService.GetExtractedHeadings();
+            PdfHeadingPageResolver.AssignPages(opts.OutputPath, (IList<HeadingInfo>)headingsSingle);
 
             // Inject outline with resolved pages
-            PdfOutlineWriter.InjectOutline(opts.OutputPath, headings);
+            PdfOutlineWriter.InjectOutline(opts.OutputPath, headingsSingle);
 
             // Remove first page footer if requested (no effect when header/footer disabled)
             if (!opts.ShowPageNumberOnFirstPage)
                 PdfFirstPageFooterRewriter.ClearFooterOnFirstPage(opts.OutputPath, opts.BottomMarginMm);
+
+            // Clear header band on all pages using top margin as height
+            PdfFirstPageFooterRewriter.ClearHeaderOnAllPages(opts.OutputPath, opts.TopMarginMm);
         }
         finally
         {
@@ -106,4 +162,10 @@ public sealed class WebView2PdfService : IPdfService
     }
 
     private static double MmToInches(double mm) => mm / 25.4;
+
+    private static string EscapeJs(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return string.Empty;
+        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
 }

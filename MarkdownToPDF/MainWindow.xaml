@@ -15,8 +15,7 @@
         <TitleBar x:Name="AppTitleBar"
                   Title="{x:Bind dev:ProcessInfoHelper.ProductName}"
                   IsBackButtonVisible="True"
-                  IsPaneToggleButtonVisible="True"
-                  Subtitle="{x:Bind dev:ProcessInfoHelper.VersionWithPrefix}">
+                  IsPaneToggleButtonVisible="True">
             <TitleBar.LeftHeader>
                 <ImageIcon Width="28"
                            Height="28"

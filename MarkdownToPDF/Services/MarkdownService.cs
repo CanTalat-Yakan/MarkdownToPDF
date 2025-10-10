@@ -87,11 +87,45 @@ public sealed class MarkdownService : IMarkdownService
         var pipeline = builder.Build();
 
         var bodyHtml = Markdig.Markdown.ToHtml(combinedMarkdown, pipeline);
+
+        // Compose head styles for TOC leaders
+        var headExtras = new StringBuilder();
+        headExtras.AppendLine("<style>");
+        headExtras.AppendLine(".toc-list, .toc-list ol { list-style-type: none; }");
+        headExtras.AppendLine(".toc-list { padding: 0; }");
+        headExtras.AppendLine(".toc-list ol { padding-inline-start: 2ch; }");
+        headExtras.AppendLine(".toc-list li > a { text-decoration: none; display: grid; grid-template-columns: auto max-content; align-items: end; }");
+        headExtras.AppendLine(".toc-list li > a > .page { text-align: right; }");
+        headExtras.AppendLine(".visually-hidden { clip: rect(0 0 0 0); clip-path: inset(100%); height: 1px; overflow: hidden; position: absolute; width: 1px; white-space: nowrap; }");
+        headExtras.AppendLine(".toc-list li > a > .title { position: relative; overflow: hidden; }");
+
+        var leadersSetting = (opts.TableOfContentsLeaders ?? "Dotted").Trim().ToUpperInvariant();
+        if (leadersSetting == "NONE")
+        {
+            headExtras.AppendLine(".toc-list li > a .leaders::after { content: none; }");
+        }
+        else // DOTTED default: use long content so it reaches the page number reliably
+        {
+            headExtras.AppendLine(@".toc-list li > a .leaders::after {
+    position: absolute;
+    padding-inline-start: .25ch;
+    content: "" . . . . . . . . . . . . . . . . . . . ""
+        "". . . . . . . . . . . . . . . . . . . . . . . ""
+        "". . . . . . . . . . . . . . . . . . . . . . . ""
+        "". . . . . . . . . . . . . . . . . . . . . . . ""
+        "". . . . . . . . . . . . . . . . . . . . . . . ""
+        "". . . . . . . . . . . . . . . . . . . . . . . ""
+        "". . . . . . . . . . . . . . . . . . . . . . . "";
+    text-align: right;
+}");
+        }
+        headExtras.AppendLine("</style>");
+
         var html = $"""
             <!DOCTYPE html>
             <html>
                 <head>
-                    <meta charset='utf-8'>{opts.HeadHtml + opts.BaseHeadHtml}
+                    <meta charset='utf-8'>{opts.HeadHtml + opts.BaseHeadHtml + headExtras}
                 </head>
                 <body>
                     {bodyHtml}

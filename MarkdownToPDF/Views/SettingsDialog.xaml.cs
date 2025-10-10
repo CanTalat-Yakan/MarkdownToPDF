@@ -64,10 +64,11 @@ public sealed partial class SettingsDialog : ContentDialog
             typeof(SettingsDialog),
             new PropertyMetadata(false));
 
-    public bool IndentTableOfContents { get; set; }
-    public string TableOfContentsBulletStyle { get; set; } = "-";
     public string TableOfContentsHeaderText { get; set; } = "Table of Contents";
     public bool TableOfContentsAfterFirstFile { get; set; }
+
+    // New: leaders style selector for HTML TOC
+    public string TableOfContentsLeaders { get; set; } = "Dotted";
 
     public string HeadHtmlText { get; set; }
 
@@ -102,10 +103,9 @@ public sealed partial class SettingsDialog : ContentDialog
         HeaderNumberingPattern = formattingOptions.HeaderNumberingPattern;
         AddHeaderNumbering = formattingOptions.AddHeaderNumbering;
         AddTableOfContents = formattingOptions.AddTableOfContents;
-        IndentTableOfContents = formattingOptions.IndentTableOfContents;
-        TableOfContentsBulletStyle = formattingOptions.TableOfContentsBulletStyle;
         TableOfContentsHeaderText = formattingOptions.TableOfContentsHeaderText;
         TableOfContentsAfterFirstFile = formattingOptions.TableOfContentsAfterFirstFile;
+        TableOfContentsLeaders = formattingOptions.TableOfContentsLeaders;
 
         DataContext = this;
         LoadFonts();
@@ -235,10 +235,9 @@ public sealed partial class SettingsDialog : ContentDialog
             AddHeaderNumbering = AddHeaderNumbering,
             HeaderNumberingPattern = HeaderNumberingPattern,
             AddTableOfContents = AddTableOfContents,
-            IndentTableOfContents = IndentTableOfContents,
-            TableOfContentsBulletStyle = TableOfContentsBulletStyle,
             TableOfContentsHeaderText = TableOfContentsHeaderText,
             TableOfContentsAfterFirstFile = TableOfContentsAfterFirstFile,
+            TableOfContentsLeaders = TableOfContentsLeaders,
             HeadHtml = HeadHtmlText
         };
 
