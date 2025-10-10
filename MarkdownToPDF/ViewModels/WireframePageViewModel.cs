@@ -128,8 +128,8 @@ public sealed class WireframePageViewModel : ObservableObject
         Export.BottomMarginMm = newExport.BottomMarginMm;
         Export.LeftMarginMm = newExport.LeftMarginMm;
         Export.ShowPageNumbers = newExport.ShowPageNumbers;
-        Export.ShowPageNumberOnFirstPage = newExport.ShowPageNumberOnFirstPage;
         Export.PageNumberPosition = newExport.PageNumberPosition;
+        Export.ShowPageNumberOnFirstPage = newExport.ShowPageNumberOnFirstPage;
         Export.PreviewDpi = newExport.PreviewDpi;
 
         if (layoutChanged)

@@ -289,7 +289,7 @@
                 <!-- ===================== PAGE NUMBERS SECTION ===================== -->
 
                 <dev:SettingsExpander Header="Page Number Settings"
-                                      Description="Configure visibility, placement and starting number."
+                                      Description="Configure visibility, placement and first page behavior."
                                       IsExpanded="False">
                     <dev:SettingsExpander.HeaderIcon>
                         <FontIcon Glyph="&#xF151;"/>

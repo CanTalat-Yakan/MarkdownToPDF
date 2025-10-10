@@ -8,6 +8,8 @@ public sealed class ExportOptions
     public string PaperFormat { get; set; } = "A4";
 
     public bool ShowPageNumbers { get; set; } = false;
+    // Keep PageNumberPosition for future engines (e.g., Puppeteer or enhanced WebView2 post-processing)
+    // Stored as a key without spaces: TopLeft | TopCenter | TopRight | BottomLeft | BottomCenter | BottomRight
     public string PageNumberPosition { get; set; } = "BottomRight";
     public bool ShowPageNumberOnFirstPage { get; set; } = true;
 
