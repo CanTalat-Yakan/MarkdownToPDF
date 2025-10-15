@@ -12,7 +12,7 @@ public sealed class FormattingOptions
         <style>
             h1 { text-align: center; }
             h2 { margin-top: 2.2em; }
-            h2, h3, h4, h5, h6, pre, code { text-align: left; }
+            h2, h3, h4, h5, h6, pre, code { text-align: left; margin-bottom: -0.5em;  }
             img { max-width:100%; }
             pre { overflow:auto; }
             table { border-collapse: collapse; border-spacing: 0; width: calc(100% - 1px); }
